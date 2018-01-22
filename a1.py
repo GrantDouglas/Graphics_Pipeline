@@ -12,6 +12,13 @@ class RGB:
 		self.cBlue = blue
 		self.cGreen = green
 
+	def printing(self):
+		print(self.cRed)
+		print(self.cBlue)
+		print(self.cGreen)
+
+	def __iter__(self):
+		yield self.cGreen, self.cBlue, self.cRed
 
 
 def xTransform(points, angle):
@@ -19,8 +26,8 @@ def xTransform(points, angle):
 		y = i[1]
 		z = i[2]
 
-		newy = int(y * math.cos(3.14/4) - z * math.sin(3.14/4))
-		newz = int(y * math.sin(3.14/4) + z * math.cos(3.14/4))
+		newy = int(y * math.cos(angle) - z * math.sin(angle))
+		newz = int(y * math.sin(angle) + z * math.cos(angle))
 
 		i[1] = newy
 		i[2] = newz
@@ -36,6 +43,17 @@ def yTransform(points, angle):
 		i[0] = newx
 		i[2] = newz
 
+def zTransform(points, angle):
+	for i in points:
+		x = i[0]
+		y = i[1]
+
+		newx = int(x * math.cos(angle) + y * math.sin(angle))
+		newy = int(y * math.cos(angle) - x * math.sin(angle))
+
+		i[0] = newx
+		i[1] = newy
+
 def rasterize(point1, point2, image):
 	dx = abs(point2[0] - point1[0])
 	dy = abs(point2[1] - point1[1])
@@ -50,13 +68,17 @@ def rasterize(point1, point2, image):
 
 	x = point1[0]
 	y = point1[1]
-	image[math.ceil(x)][math.ceil(y)] = 255
+	image[math.ceil(x)][math.ceil(y)].cRed = 255
+	image[math.ceil(x)][math.ceil(y)].cGreen = 255
+	image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
 
 	for i in range(length-1):
 		x += dx
 		y += dy
-		image[math.ceil(x)][math.ceil(y)] = 255
+		image[math.ceil(x)][math.ceil(y)].cRed = 255
+		image[math.ceil(x)][math.ceil(y)].cGreen = 255
+		image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
 def oneDimension(x, y):
 	return y * 800 + x
@@ -78,17 +100,20 @@ points = [
 		[-128,-128,128]
 		]
 
-angle = 3.1415/4
+# angle = 3.1415/4
 
 # print(points)
 
 yTransform(points, angle)
 xTransform(points, angle)
 
-# print(points) y * 800 + x
 
+# print(points) y * 800 + x
+	
 matrix = []
 count = 0
+
+
 
 # add 300 to each point so its actually on the screen
 for k in points:
@@ -96,13 +121,16 @@ for k in points:
 	k[1] += 300
 	matrix.append(k[:2])
 
-image = [[0 for x in range(800)] for y in range(800)]
+image = [[RGB(0,0,0) for x in range(800)] for y in range(800)]
 
+image[0][1].printing()
 
 
 # place a value of 255 on the image where the cube will be
 for i in matrix:
-	image[i[0]][i[1]] = 255
+	image[i[0]][i[1]].cRed = 255
+	image[i[0]][i[1]].cGreen = 255
+	image[i[0]][i[1]].cBlue = 255
 	
 
 finalMatrix = [tuple(l) for l in matrix]
@@ -124,17 +152,23 @@ for key, val in connections.items():
 		rasterize(key, point, image)
 	print(val)
 
-print(image)
 
-string = ''.join(str(e) for e in image)
+# for k in image:
+# 	for l in k:
+# 		l.printing()
 
+newImage = image
 
-print(connections)
+for m,i in enumerate(image):
+	for n,j in enumerate(i):
+		newImage[m][n] = (j.cRed, j.cGreen, j.cBlue)
+			
 
-arr = np.array(image)
+# print(image)
 
+arr = np.array(image, dtype=np.uint8)
 
-print(arr)
+# print(arr)
 
-
-
+img = Image.fromarray(arr, 'RGB')
+img.save('testing.png')
