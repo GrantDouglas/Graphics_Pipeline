@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import math, time, sys, array
+import math, time, sys, array, itertools
 import numpy as np 
 from PIL import Image
 # import fbpy as fb
@@ -16,10 +16,6 @@ class RGB:
 		print(self.cRed)
 		print(self.cBlue)
 		print(self.cGreen)
-
-	def __iter__(self):
-		yield self.cGreen, self.cBlue, self.cRed
-
 
 def xTransform(points, angle):
 	for i in points:
@@ -72,7 +68,6 @@ def rasterize(point1, point2, image):
 	image[math.ceil(x)][math.ceil(y)].cGreen = 255
 	image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
-
 	for i in range(length-1):
 		x += dx
 		y += dy
@@ -80,16 +75,8 @@ def rasterize(point1, point2, image):
 		image[math.ceil(x)][math.ceil(y)].cGreen = 255
 		image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
-def oneDimension(x, y):
-	return y * 800 + x
-
-np.set_printoptions(threshold=np.nan)
-
-angle = float(sys.argv[1])
-
-w, h = 255, 255;
-
-points = [
+def cube():
+	points = [
 		[128,128,-128],
 		[-128,128,-128],
 		[128,-128,-128],
@@ -100,75 +87,94 @@ points = [
 		[-128,-128,128]
 		]
 
-# angle = 3.1415/4
+	triangleMesh(2, points)
 
-# print(points)
+		# transform the x and y coordinates to make 3d shape more clear
+	yTransform(points, angle)
+	xTransform(points, angle)
 
-yTransform(points, angle)
-xTransform(points, angle)
+	matrix = []
 
+	print(points)
 
-# print(points) y * 800 + x
-	
-matrix = []
-count = 0
-
-
-
-# add 300 to each point so its actually on the screen
-for k in points:
-	k[0] += 300
-	k[1] += 300
-	matrix.append(k[:2])
-
-image = [[RGB(0,0,0) for x in range(800)] for y in range(800)]
-
-image[0][1].printing()
-
-
-# place a value of 255 on the image where the cube will be
-for i in matrix:
-	image[i[0]][i[1]].cRed = 255
-	image[i[0]][i[1]].cGreen = 255
-	image[i[0]][i[1]].cBlue = 255
 	
 
-finalMatrix = [tuple(l) for l in matrix]
+	# print(points)
 
-# make a hashmap relating each point to its respective connections
-connections = {
-				finalMatrix[0]: [finalMatrix[1], finalMatrix[2], finalMatrix[4]],
-				finalMatrix[1]: [finalMatrix[3], finalMatrix[5], finalMatrix[0]],
-				finalMatrix[2]: [finalMatrix[0], finalMatrix[3], finalMatrix[6]],
-				finalMatrix[3]: [finalMatrix[1], finalMatrix[2], finalMatrix[7]],
-				finalMatrix[4]: [finalMatrix[5], finalMatrix[0], finalMatrix[6]],
-				finalMatrix[5]: [finalMatrix[1], finalMatrix[4], finalMatrix[7]],
-				finalMatrix[6]: [finalMatrix[2], finalMatrix[7], finalMatrix[4]],
-				finalMatrix[7]: [finalMatrix[5], finalMatrix[3], finalMatrix[6]],
-}
+	# add 300 to each point so its actually on the screen
+	for k in points:
+		k[0] += 300
+		k[1] += 300
+		matrix.append(k[:2])
 
-for key, val in connections.items():
-	for point in val:
-		rasterize(key, point, image)
-	print(val)
+	finalMatrix = [tuple(l) for l in matrix]
+
+	# make a hashmap relating each point to its respective connections
+	connections = {
+					finalMatrix[0]: [finalMatrix[1], finalMatrix[2], finalMatrix[4]],
+					finalMatrix[1]: [finalMatrix[3], finalMatrix[5], finalMatrix[0]],
+					finalMatrix[2]: [finalMatrix[0], finalMatrix[3], finalMatrix[6]],
+					finalMatrix[3]: [finalMatrix[1], finalMatrix[2], finalMatrix[7]],
+					finalMatrix[4]: [finalMatrix[5], finalMatrix[0], finalMatrix[6]],
+					finalMatrix[5]: [finalMatrix[1], finalMatrix[4], finalMatrix[7]],
+					finalMatrix[6]: [finalMatrix[2], finalMatrix[7], finalMatrix[4]],
+					finalMatrix[7]: [finalMatrix[5], finalMatrix[3], finalMatrix[6]],
+	}
+
+	return finalMatrix, connections, matrix
+
+def triangleMesh(resolution, points):
+	new = list(itertools.combinations(points, 2))
+	final = []
+	for x in new:
+		if (x[1][0] - x[0][0] == 0 and x[1][2] == x[0][2]) or (x[1][1] - x[0][1] == 0 and x[1][2] == x[0][2]) or (x[1][2] - x[0][2] == 0 and x[1][1] == x[0][1] and x[1][0] == x[0][0]):
+			final.append(x)
+	print(final)
 
 
-# for k in image:
-# 	for l in k:
-# 		l.printing()
+if __name__ == "__main__":
+	np.set_printoptions(threshold=np.nan)
 
-newImage = image
+	if len(sys.argv) != 4:
+		print("not enough arguments")
+		sys.exit(1)
 
-for m,i in enumerate(image):
-	for n,j in enumerate(i):
-		newImage[m][n] = (j.cRed, j.cGreen, j.cBlue)
-			
+	angle = float(sys.argv[1])
+	shape = sys.argv[2]
+	mesh = sys.argv[3]
 
-# print(image)
 
-arr = np.array(image, dtype=np.uint8)
+	if shape == "cube":
+		finalMatrix, connections, matrix = cube()
+		
+	else:
+		print("WIP")
+		sys.exit(1)
 
-# print(arr)
+	# create an image matrix that is empty
+	image = [[RGB(0,0,0) for x in range(800)] for y in range(800)]
 
-img = Image.fromarray(arr, 'RGB')
-img.save('testing.png')
+
+	# place a value of 255 on the image where the cube will be
+	for i in matrix:
+		image[i[0]][i[1]].cRed = 255
+		image[i[0]][i[1]].cGreen = 255
+		image[i[0]][i[1]].cBlue = 255
+		
+	# rasterize a line between the key and each of its respective points
+	for key, val in connections.items():
+		for point in val:
+			rasterize(key, point, image)
+
+	newImage = image
+
+	for m,i in enumerate(image):
+		for n,j in enumerate(i):
+			newImage[m][n] = (j.cRed, j.cGreen, j.cBlue)
+
+	arr = np.array(image, dtype=np.uint8)
+
+	# print(arr)
+
+	img = Image.fromarray(arr, 'RGB')
+	img.save('testing.png')
