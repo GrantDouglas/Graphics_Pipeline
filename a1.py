@@ -121,7 +121,7 @@ def connect(matrix, key):
     return connectionPoints
 
 
-def cube():
+def cube(res):
     points = [
         [128, 128, -128],
         [-128, 128, -128],
@@ -133,7 +133,7 @@ def cube():
         [-128, -128, 128]
         ]
 
-    triangGrid = triangleMesh(2, points)
+    triangGrid = triangleMesh(res, points)
     newPoints = triangGrid + points
 
     finalPoints = []
@@ -159,34 +159,6 @@ def cube():
     for key in coordSet:
         connections[key] = connect(coordList, key)
 
-
-    # matrix = []
-
-    # # add 300 to each point so its actually on the screen
-    # for k in finalPoints:
-    #     k[0] += 300
-    #     k[1] += 300
-    #     k[2] += 300
-    #     matrix.append(k)
-
-    # finalMatrix = [tuple(l) for l in matrix]
-
-    # finalSet = set(tuple(x) for x in finalPoints)
-
-    # pointObjects = [coords(x[0], x[1], x[2]) for x in matrix]
-
-    # for x in pointObjects:
-    #     print(x.send_vals())
-
-    # connections = {}
-
-    # for key in pointObjects:
-    #     connections[key] = connect(matrix, key)
-
-    # for key, val in connections.items():
-    #     print(key, ": ", val)
-
-
     # transform the x and y coordinates to make 3d shape more clear
     yTransform(matrix, angle)
     xTransform(matrix, angle)
@@ -211,7 +183,7 @@ def triangleMesh(resolution, points):
 
     for x in final:
         if x[1][2] - x[0][2] != 0:
-            gap = int((abs(x[0][2]) + abs(x[1][2])) / 2)
+            gap = int((abs(x[0][2]) + abs(x[1][2])) / resolution)
             start = min(x[0][2], x[1][2])
             end = max(x[0][2], x[1][2])
 
@@ -219,7 +191,7 @@ def triangleMesh(resolution, points):
                 newFinal.append([x[0][0], x[0][1], k])
 
         elif x[1][0] - x[0][0] == 0:
-            gap = int((abs(x[0][1]) + abs(x[1][1])) / 2)
+            gap = int((abs(x[0][1]) + abs(x[1][1])) / resolution)
             start = min(x[0][1], x[1][1])
             end = max(x[0][1], x[1][1])
 
@@ -227,7 +199,7 @@ def triangleMesh(resolution, points):
                 newFinal.append([x[0][0], k, x[0][2]])
 
         elif x[1][1] - x[0][1] == 0:
-            gap = int((abs(x[0][0]) + abs(x[1][0])) / 2)
+            gap = int((abs(x[0][0]) + abs(x[1][0])) / resolution)
             start = min(x[0][0], x[1][0])
             end = max(x[0][0], x[1][0])
 
@@ -239,28 +211,21 @@ def triangleMesh(resolution, points):
 if __name__ == "__main__":
     np.set_printoptions(threshold=np.nan)
 
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print("not enough arguments")
         sys.exit(1)
 
     angle = float(sys.argv[1])
     shape = sys.argv[2]
     mesh = sys.argv[3]
+    resolution = int(sys.argv[4])
 
     if shape == "cube":
-        connections, matrix = cube()
+        connections, matrix = cube(resolution)
 
     else:
         print("WIP")
         sys.exit(1)
-
-
-
-    # print(matrix)
-
-    for key, val in connections.items():
-        for k in val:
-            print(key.send_vals(), ": ", k.send_vals())
 
     # create an image matrix that is empty
     image = [[RGB(0, 0, 0) for x in range(800)] for y in range(800)]
