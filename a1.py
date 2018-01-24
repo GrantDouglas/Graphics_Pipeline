@@ -111,12 +111,26 @@ def rasterize(point1, point2, image):
         image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
 
-def connect(matrix, key):
+def connect(matrix, resolution, key):
     connectionPoints = []
 
     for x in matrix:
-        if (x.send_vals()[0] - key.send_vals()[0] == 0 and x.send_vals()[2] == key.send_vals()[2]) or (x.send_vals()[1] - key.send_vals()[1] == 0 and x.send_vals()[2] == key.send_vals()[2]) or (x.send_vals()[2] - key.send_vals()[2] != 0 and x.send_vals()[1] == key.send_vals()[1] and x.send_vals()[0] == key.send_vals()[0]):
+        if (x.send_vals()[0] - key.send_vals()[0] == 0 and x.send_vals()[2] == key.send_vals()[2])\
+        or (x.send_vals()[1] - key.send_vals()[1] == 0 and x.send_vals()[2] == key.send_vals()[2])\
+        or (x.send_vals()[2] - key.send_vals()[2] != 0 and x.send_vals()[1] == key.send_vals()[1] and x.send_vals()[0] == key.send_vals()[0]):
             connectionPoints.append(x)
+
+
+
+    for x in matrix:
+    	
+    	dist = math.sqrt( math.pow((x.get_x() - key.get_x()), 2) + math.pow((x.get_y() - key.get_y()),2) + math.pow((x.get_z() - key.get_z()),2))
+    	squareLen = math.sqrt(2 * math.pow((255/resolution), 2))
+    	if (x.get_x() == key.get_y() and x.get_y() == key.get_x() and x.get_z() == key.get_z()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05))\
+    	or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05))\
+    	or (x.get_y() == key.get_z() and x.get_z() == key.get_y() and x.get_x() == key.get_x()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05)):
+    		
+    		connectionPoints.append(x)
 
     return connectionPoints
 
@@ -146,7 +160,7 @@ def cube(res):
 
     coordList = [coords(x[0], x[1], x[2]) for x in finalPoints]
 
-    connect(coordList, coordList[0])
+    connect(coordList, resolution, coordList[0])
 
     for k in coordList:
         k.set_x(k.xCoord)
@@ -154,10 +168,13 @@ def cube(res):
         k.set_z(k.zCoord)
         matrix.append(k)
 
+    for x in matrix:
+    	print(x.send_vals())
+
     coordSet = [x for x in matrix]
 
     for key in coordSet:
-        connections[key] = connect(coordList, key)
+        connections[key] = connect(coordList, resolution, key)
 
     # transform the x and y coordinates to make 3d shape more clear
     yTransform(matrix, angle)
