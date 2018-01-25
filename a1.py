@@ -120,22 +120,89 @@ def connect(matrix, resolution, key):
         or (x.send_vals()[2] - key.send_vals()[2] != 0 and x.send_vals()[1] == key.send_vals()[1] and x.send_vals()[0] == key.send_vals()[0]):
             connectionPoints.append(x)
 
-
-
     for x in matrix:
-    	
-    	dist = math.sqrt( math.pow((x.get_x() - key.get_x()), 2) + math.pow((x.get_y() - key.get_y()),2) + math.pow((x.get_z() - key.get_z()),2))
-    	squareLen = math.sqrt(2 * math.pow((255/resolution), 2))
-    	if (x.get_x() == key.get_y() and x.get_y() == key.get_x() and x.get_z() == key.get_z()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05))\
-    	or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05))\
-    	or (x.get_y() == key.get_z() and x.get_z() == key.get_y() and x.get_x() == key.get_x()) and ((squareLen*0.95) <= dist <= (squareLen * 1.05)):
-    		
-    		connectionPoints.append(x)
+        if (x.get_x() == key.get_y() and x.get_y() == key.get_x() and x.get_z() == key.get_z())\
+        or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y())\
+        or (x.get_y() == key.get_z() and x.get_z() == key.get_y() and x.get_x() == key.get_x()):
+
+            connectionPoints.append(x)
 
     return connectionPoints
 
+def circleCoords(startX, startY, radius):
+    x = radius - 1
+    y = 0
 
-def cube(res):
+    dx = 1
+    dy = 1
+
+    error = dx - (radius << 1)
+
+    points = []
+
+    while x >= y:
+        points.append([startX + x, startY + y, -128])
+        points.append([startX + y, startY + x, -128])
+        points.append([startX - y, startY + x, -128])
+        points.append([startX - x, startY + y, -128])
+        points.append([startX - x, startY - y, -128])
+        points.append([startX - y, startY - x, -128])
+        points.append([startX + y, startY - x, -128])
+        points.append([startX + x, startY - y, -128])
+
+        if error <= 0:
+            y += 1
+            error += dy
+            dy += 2
+        else:
+            x -= 1
+            dx += 2
+            error += dx - (radius << 1)
+
+    return points
+
+
+def sphere(resolution, mesh):
+    points = circleCoords(128, 0, 128)
+    finalPoints = []
+    for x in points:
+        if x not in finalPoints:
+            finalPoints.append(x)
+
+    coordList = [coords(x[0], x[1], x[2]) for x in finalPoints]
+
+    for k in coordList:
+        k.set_x(k.xCoord+300)
+        k.set_y(k.yCoord+300)
+        k.set_z(k.zCoord+300)
+
+    print(points)
+
+    image = [[RGB(0, 0, 0) for x in range(800)] for y in range(800)]
+
+    # place a value of 255 on the image where the cube will be
+    for i in coordList:
+        image[i.get_x()][i.get_y()].cRed = 255
+        image[i.get_x()][i.get_y()].cGreen = 255
+        image[i.get_x()][i.get_y()].cBlue = 255
+
+    # rasterize a line between the key and each of its respective points
+
+    newImage = image
+
+    for m, i in enumerate(image):
+        for n, j in enumerate(i):
+            newImage[m][n] = (j.cRed, j.cGreen, j.cBlue)
+
+    arr = np.array(image, dtype=np.uint8)
+
+    # print(arr)
+
+    img = Image.fromarray(arr, 'RGB')
+    img.save('testing.png')
+
+
+def cube(res, mesh):
     points = [
         [128, 128, -128],
         [-128, 128, -128],
@@ -147,8 +214,14 @@ def cube(res):
         [-128, -128, 128]
         ]
 
-    triangGrid = triangleMesh(res, points)
-    newPoints = triangGrid + points
+    if mesh == "triag":
+        triangGrid = triangleMesh(res, points)
+        newPoints = triangGrid + points
+    elif mesh == "poly":
+        newPoints = points
+    else:
+        print("not valid mesh")
+        sys.exit(1)
 
     finalPoints = []
     matrix = []
@@ -169,7 +242,7 @@ def cube(res):
         matrix.append(k)
 
     for x in matrix:
-    	print(x.send_vals())
+        print(x.send_vals())
 
     coordSet = [x for x in matrix]
 
@@ -238,8 +311,9 @@ if __name__ == "__main__":
     resolution = int(sys.argv[4])
 
     if shape == "cube":
-        connections, matrix = cube(resolution)
-
+        connections, matrix = cube(resolution, mesh)
+    elif shape == "sphere":
+        connections, matrix = sphere(resolution, mesh)
     else:
         print("WIP")
         sys.exit(1)
