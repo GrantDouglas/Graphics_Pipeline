@@ -184,12 +184,13 @@ def circleCoords(startX, startY, radius):
     while x >= y:
         points.append([startX + x, startY + y, -128])
         points.append([startX + y, startY + x, -128])
+        points.append([startX + y, startY - x, -128])
+        points.append([startX + x, startY - y, -128])
         points.append([startX - y, startY + x, -128])
         points.append([startX - x, startY + y, -128])
         points.append([startX - x, startY - y, -128])
         points.append([startX - y, startY - x, -128])
-        points.append([startX + y, startY - x, -128])
-        points.append([startX + x, startY - y, -128])
+
 
         # move the y coordinate up if it did not go far enough. otherwise move back an x coordinate
         if error <= 0:
@@ -263,11 +264,13 @@ def sphere(resolution, mesh):
 
     coordSet = [x for x in matrix]
 
-    print(coordSet[0].send_vals())
-
-    connections[coordSet[0]] = connectCircle(resolution, coordSet[0])
-
-    print(connections)
+    if mesh == "tri":
+        connections[coordSet[0]] = connectCircle(resolution, coordSet[0])
+    elif mesh == "poly":
+        connections = {}
+    else:
+        print("not a valid mesh")
+        sys.exit(1)
 
     for k in matrix:
         k.set_x(k.xCoord+300)
@@ -307,7 +310,7 @@ def cube(res, mesh):
     elif mesh == "poly":
         newPoints = points
     else:
-        print("not valid mesh")
+        print("not a valid mesh")
         sys.exit(1)
 
     finalPoints = []
@@ -419,7 +422,7 @@ if __name__ == "__main__":
     elif shape == "sphere":
         connections, matrix = sphere(resolution, mesh)
     else:
-        print("WIP")
+        print("WIP: try using cube or sphere for the shape instead")
         sys.exit(1)
 
     # create an image matrix that is empty
