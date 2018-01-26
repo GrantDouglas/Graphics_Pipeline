@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 
+
 import math, time, sys, array, itertools
 import numpy as np
 from PIL import Image
 
 
-#
-#   This is a class used to store the RGB values of the image matrix
-#
 class RGB:
+    """The class of red green blue values of the image
+
+    This class contains all data pertaining to the red green blue values of the image matrix
+    """
     def __init__(self, red, green, blue):
         self.cRed = red
         self.cBlue = blue
@@ -19,11 +21,12 @@ class RGB:
         print(self.cBlue)
         print(self.cGreen)
 
-#
-#  This is a class that stores all of the coordinates for the points.
-#
-class coords:
 
+class coords:
+    """The class of coordinates
+
+    This class contains all of the data pertainint to the coordinates of a shape
+    """
     def __init__(self, x, y, z):
         self.xCoord = x
         self.yCoord = y
@@ -50,12 +53,16 @@ class coords:
     def get_z(self):
         return self.zCoord
 
-#
-#   This function is responsible for transforming the given points through the x axis.
-#   In: points  A list of points to be transformed
-#       angle   An angle in radians to rotate the x axis by
-#
+
 def xTransform(points, angle):
+    """Transform points in the x axis
+
+    This function will transform a given list of points on the x axis by a given angle
+
+    Arguments:
+        points {List} -- A list of points to bhe rotated
+        angle {Float} -- An angle in radians to rotate the axis by
+    """
     for i in points:
         y = i.get_y()
         z = i.get_z()
@@ -190,7 +197,6 @@ def circleCoords(startX, startY, radius):
         points.append([startX - x, startY + y, -128])
         points.append([startX - x, startY - y, -128])
         points.append([startX - y, startY - x, -128])
-
 
         # move the y coordinate up if it did not go far enough. otherwise move back an x coordinate
         if error <= 0:
@@ -344,9 +350,9 @@ def cube(res, mesh):
 
     # move the square to the middle of the image for a cleaner look
     for k in coordList:
-        k.set_x(k.xCoord+300)
-        k.set_y(k.yCoord+400)
-        k.set_z(k.zCoord+400)
+        k.set_x(k.xCoord + 300)
+        k.set_y(k.yCoord + 400)
+        k.set_z(k.zCoord + 400)
 
     return connections, matrix
 
@@ -405,7 +411,7 @@ def grid(resolution, points):
     return newFinal
 
 if __name__ == "__main__":
-    np.set_printoptions(threshold=np.nan)
+
 
     if len(sys.argv) != 5:
         print("not enough arguments")
@@ -448,7 +454,6 @@ if __name__ == "__main__":
 
     arr = np.array(newImage, dtype=np.uint8)
 
-    # print(arr)
-
+    # create the image and save it
     img = Image.fromarray(arr, 'RGB')
     img.save('testing.png')
