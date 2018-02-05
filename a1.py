@@ -222,6 +222,7 @@ def circleCoords(startX, startY, radius, axis, res):
 
         points = []
         points.append([128, 128, -128])
+        points.append([128, 0, -128])
 
         # plot all points until it hits the y axis
         while x >= z:
@@ -367,13 +368,15 @@ def cone(res, mesh):
 
     if mesh == "tri":
         test = connectCircle(res, coordSet[0], 'z', matrix)
-        print(coordSet[0].send_vals())
         for k in test:
             nearest = min(matrix, key=lambda x: (math.sqrt((k.get_x() - x.get_x())**2 + (k.get_y() - x.get_y())**2 + (k.get_z() - x.get_z())**2)))
             finalConnect.append(nearest)
-            print(nearest.send_vals())
+
+        newConnect = finalConnect
 
         connections[coordSet[0]] = finalConnect
+        connections[coordSet[1]] = newConnect
+
         newMatrix = matrix
     elif mesh == "poly":
         test = [coords(-128, 0, 0), coords(128, 0, 0)]
@@ -390,7 +393,6 @@ def cone(res, mesh):
         k.set_x(k.xCoord + 200)
         k.set_y(k.yCoord + 200)
         k.set_z(k.zCoord + 200)
-        print(k.send_vals())
 
     return connections, newMatrix
 
