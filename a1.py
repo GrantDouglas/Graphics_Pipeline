@@ -163,7 +163,7 @@ def connect(matrix, key):
     return connectionPoints
 
 
-def circleCoords(startX, startY, radius, axis, res):
+def circleCoords(startX, startY, radius, axis, res, vol):
     """Creates a circle
 
     This function will create a circle using the Midpoint Circle Algorithm
@@ -189,18 +189,18 @@ def circleCoords(startX, startY, radius, axis, res):
         error = delta_x - (radius * 2)
 
         points = []
-        points.append([128, 0, -128])
+        points.append([vol, 0, -vol])
 
         # plot all points until it hits the y axis
         while x >= y:
-            points.append([startX + x, startY + y, -128])
-            points.append([startX + y, startY + x, -128])
-            points.append([startX + y, startY - x, -128])
-            points.append([startX + x, startY - y, -128])
-            points.append([startX - y, startY + x, -128])
-            points.append([startX - x, startY + y, -128])
-            points.append([startX - x, startY - y, -128])
-            points.append([startX - y, startY - x, -128])
+            points.append([startX + x, startY + y, -vol])
+            points.append([startX + y, startY + x, -vol])
+            points.append([startX + y, startY - x, -vol])
+            points.append([startX + x, startY - y, -vol])
+            points.append([startX - y, startY + x, -vol])
+            points.append([startX - x, startY + y, -vol])
+            points.append([startX - x, startY - y, -vol])
+            points.append([startX - y, startY - x, -vol])
 
             # move the y coordinate up if it did not go far enough. otherwise move back an x coordinate
             if error <= 0:
@@ -221,8 +221,8 @@ def circleCoords(startX, startY, radius, axis, res):
         error = delta_x - (radius * 2)
 
         points = []
-        points.append([128, 128, -128])
-        points.append([128, 0, -128])
+        points.append([vol, vol, -vol])
+        points.append([vol, 0, -vol])
 
         # plot all points until it hits the y axis
         while x >= z:
@@ -250,7 +250,7 @@ def circleCoords(startX, startY, radius, axis, res):
     return finalPoints, angleList
 
 
-def connectCircle(res, key, axis, points):
+def connectCircle(res, key, axis, points, volume):
     """Divides a circle into even portions
 
     This function will divide a circle into portions based on the resolution value
@@ -262,7 +262,7 @@ def connectCircle(res, key, axis, points):
     Returns:
         list of coords -- A list of coord objects which make up the circle division
     """
-    r = 127
+    r = volume - 1
     angle = 0
     connectList = []
     finalConnect = []
@@ -276,7 +276,7 @@ def connectCircle(res, key, axis, points):
         if axis == 'x':
             x = int(key.get_x() + r * math.cos(angle))
             y = int(key.get_y() + r * math.sin(angle))
-            connectList.append(coords(x, y, -128))
+            connectList.append(coords(x, y, -volume))
         elif axis == 'z':
             x = int(key.get_x() + r * math.cos(angle))
             z = int(key.get_z() + r * math.sin(angle))
@@ -284,7 +284,7 @@ def connectCircle(res, key, axis, points):
     return connectList
 
 
-def sphere(resolution, mesh):
+def sphere(resolution, mesh, vol):
     """Creates a sphere
     This function will create a sphere
 
@@ -296,7 +296,7 @@ def sphere(resolution, mesh):
         List -- A dictionary where each key is a coord object, and it maps to a list of coord objects
         List -- A matrix which contains coord objects for each point of the sphere
     """
-    points, angles = circleCoords(128, 0, 128, 'x', res)
+    points, angles = circleCoords(vol, 0, vol, 'x', resolution, vol)
     finalPoints = []
     matrix = []
     connections = {}
@@ -317,7 +317,7 @@ def sphere(resolution, mesh):
     test = []
 
     if mesh == "tri":
-        test = connectCircle(resolution, coordSet[0], 'x', matrix)
+        test = connectCircle(resolution, coordSet[0], 'x', matrix, vol)
         connections[coordSet[0]] = test
     elif mesh == "poly":
         connections = {}
@@ -326,6 +326,7 @@ def sphere(resolution, mesh):
         sys.exit(1)
 
     newMatrix = matrix + test
+    xTransform(newMatrix, angle)
 
     for k in newMatrix:
         k.set_x(k.xCoord+300)
@@ -335,7 +336,7 @@ def sphere(resolution, mesh):
     return connections, newMatrix
 
 
-def cone(res, mesh):
+def cone(res, mesh, vol):
     """Creates a cone
 
     This funciton will create a mesh of a cone
@@ -344,7 +345,7 @@ def cone(res, mesh):
         res {[type]} -- The number of triangles to create
         mesh {[type]} -- the type of mesh to create.
     """
-    points, angles = circleCoords(128, -128, 128, 'z', res)
+    points, angles = circleCoords(vol, -vol, vol, 'z', res, vol)
     finalPoints = []
     matrix = []
     connections = {}
@@ -378,10 +379,6 @@ def cone(res, mesh):
         connections[coordSet[1]] = newConnect
 
         newMatrix = matrix
-    elif mesh == "poly":
-        test = [coords(-128, 0, 0), coords(128, 0, 0)]
-        connections[coordSet[0]] = test
-        newMatrix = matrix + test
     else:
         print("not a valid mesh")
         sys.exit(1)
@@ -527,7 +524,7 @@ def grid(resolution, points):
 if __name__ == "__main__":
 
 
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print("not enough arguments")
         sys.exit(1)
 
@@ -535,14 +532,15 @@ if __name__ == "__main__":
     shape = sys.argv[2]
     mesh = sys.argv[3]
     resolution = int(sys.argv[4])
+    volume = int(sys.argv[5])
 
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
         connections, matrix = cube(resolution, mesh)
     elif shape == "sphere":
-        connections, matrix = sphere(resolution, mesh)
+        connections, matrix = sphere(resolution, mesh, volume)
     elif shape == "cone":
-        connections, matrix = cone(resolution, mesh)
+        connections, matrix = cone(resolution, mesh, volume)
     else:
         print("WIP: try using cube or sphere for the shape instead")
         sys.exit(1)
