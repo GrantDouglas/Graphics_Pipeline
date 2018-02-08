@@ -95,6 +95,27 @@ def yTransform(points, angle):
         i.set_z(newz)
 
 
+def zTransform(points, angle):
+    """Transform points in the z axis
+
+    This function will transform a given list of points on the z axis by a given angle
+
+    Arguments:
+        points {List} -- A list of points to bhe rotated
+        angle {Float} -- An angle in radians to rotate the axis by
+    """
+
+    for i in points:
+        x = i.get_x()
+        y = i.get_y()
+
+        newx = int(x * math.cos(angle) - y * math.sin(angle))
+        newy = int(y * math.cos(angle) + x * math.sin(angle))
+
+        i.set_x(newx)
+        i.set_y(newy)
+
+
 def rasterize(point1, point2, image):
     """Rasterize a line between two points
 
@@ -368,7 +389,7 @@ def cone(res, mesh, vol):
     finalConnect = []
 
     if mesh == "tri":
-        test = connectCircle(res, coordSet[0], 'z', matrix)
+        test = connectCircle(res, coordSet[0], 'z', matrix, volume)
         for k in test:
             nearest = min(matrix, key=lambda x: (math.sqrt((k.get_x() - x.get_x())**2 + (k.get_y() - x.get_y())**2 + (k.get_z() - x.get_z())**2)))
             finalConnect.append(nearest)
@@ -383,7 +404,18 @@ def cone(res, mesh, vol):
         print("not a valid mesh")
         sys.exit(1)
 
+    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+
     xTransform(newMatrix, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+
+    yTransform(newMatrix, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+
+    yTransform(newMatrix, angle)
+
     # xTransform(finalConnect, angle)
 
     for k in newMatrix:
