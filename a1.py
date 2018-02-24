@@ -553,6 +553,10 @@ def grid(resolution, points):
 
     return newFinal
 
+def scene(image1, image2, image3):
+
+    return 0
+
 if __name__ == "__main__":
 
 
@@ -569,20 +573,31 @@ if __name__ == "__main__":
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
         connections, matrix = cube(resolution, mesh)
+        name = "cube.png"
     elif shape == "sphere":
         connections, matrix = sphere(resolution, mesh, volume)
+        name = "sphere.png"
     elif shape == "cone":
         connections, matrix = cone(resolution, mesh, volume)
+        name = "cone.png"
     else:
         print("WIP: try using cube or sphere for the shape instead")
         sys.exit(1)
+
+    for k in matrix:
+        if k.get_x() < 0:
+            k.set_x(0)
+        elif k.get_x() > 800:
+            k.set_x(800)
+        elif k.get_y() < 0:
+            k.set_y(0)
+        elif k.get_y() > 800:
+            k.set_y(800)
 
     print(len(matrix))
 
     # create an image matrix that is empty
     image = [[RGB(0, 0, 0) for j in range(800)] for k in range(800)]
-
-
 
     # place a value of 255 on the image where the cube will be
     for i in matrix:
@@ -606,4 +621,4 @@ if __name__ == "__main__":
 
     # create the image and save it
     img = Image.fromarray(arr, 'RGB')
-    img.save('testing.png')
+    img.save(name)
