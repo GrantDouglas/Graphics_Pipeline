@@ -347,7 +347,18 @@ def sphere(resolution, mesh, vol):
         sys.exit(1)
 
     newMatrix = matrix + test
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+
     xTransform(newMatrix, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+
+    yTransform(newMatrix, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+
+    yTransform(newMatrix, angle)
 
     for k in newMatrix:
         k.set_x(k.xCoord+300)
@@ -416,15 +427,12 @@ def cone(res, mesh, vol):
 
     yTransform(newMatrix, angle)
 
-    # xTransform(finalConnect, angle)
-
     for k in newMatrix:
         k.set_x(k.xCoord + 200)
         k.set_y(k.yCoord + 200)
         k.set_z(k.zCoord + 200)
 
     return connections, newMatrix
-
 
 
 def cube(res, mesh):
@@ -486,16 +494,23 @@ def cube(res, mesh):
         connections[key] = connect(coordList, key)
 
     # transform the x and y coordinates to make 3d shape more clear
-    yTransform(matrix, angle)
-    xTransform(matrix, angle)
+    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+
+    xTransform(coordList, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+
+    yTransform(coordList, angle)
+
+    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+
+    yTransform(coordList, angle)
 
     # move the square to the middle of the image for a cleaner look
     for k in coordList:
         k.set_x(k.xCoord + 300)
         k.set_y(k.yCoord + 400)
         k.set_z(k.zCoord + 400)
-
-
 
     return connections, matrix
 
@@ -553,49 +568,13 @@ def grid(resolution, points):
 
     return newFinal
 
+
 def scene(image1, image2, image3):
 
     return 0
 
-if __name__ == "__main__":
 
-
-    if len(sys.argv) != 6:
-        print("not enough arguments")
-        sys.exit(1)
-
-    angle = float(sys.argv[1])
-    shape = sys.argv[2]
-    mesh = sys.argv[3]
-    resolution = int(sys.argv[4])
-    volume = int(sys.argv[5])
-
-    # redirect to appropriate algorithm for the shape
-    if shape == "cube":
-        connections, matrix = cube(resolution, mesh)
-        name = "cube.png"
-    elif shape == "sphere":
-        connections, matrix = sphere(resolution, mesh, volume)
-        name = "sphere.png"
-    elif shape == "cone":
-        connections, matrix = cone(resolution, mesh, volume)
-        name = "cone.png"
-    else:
-        print("WIP: try using cube or sphere for the shape instead")
-        sys.exit(1)
-
-    for k in matrix:
-        if k.get_x() < 0:
-            k.set_x(0)
-        elif k.get_x() > 800:
-            k.set_x(800)
-        elif k.get_y() < 0:
-            k.set_y(0)
-        elif k.get_y() > 800:
-            k.set_y(800)
-
-    print(len(matrix))
-
+def imaging(matrix, connection, name):
     # create an image matrix that is empty
     image = [[RGB(0, 0, 0) for j in range(800)] for k in range(800)]
 
@@ -622,3 +601,54 @@ if __name__ == "__main__":
     # create the image and save it
     img = Image.fromarray(arr, 'RGB')
     img.save(name)
+
+    return img
+
+
+def removeWrapping(matrix):
+    for k in matrix:
+        if k.get_x() < 0:
+            k.set_x(0)
+        elif k.get_x() > 800:
+            k.set_x(800)
+        elif k.get_y() < 0:
+            k.set_y(0)
+        elif k.get_y() > 800:
+            k.set_y(800)
+
+
+if __name__ == "__main__":
+
+
+    if len(sys.argv) != 5:
+        print("not enough arguments")
+        sys.exit(1)
+
+    shape = sys.argv[1]
+    mesh = sys.argv[2]
+    resolution = int(sys.argv[3])
+    volume = int(sys.argv[4])
+
+    # redirect to appropriate algorithm for the shape
+    if shape == "cube":
+        connections, matrix = cube(resolution, mesh)
+        removeWrapping(matrix)
+        name = "cube.png"
+        image = imaging(matrix, connections, name)
+    elif shape == "sphere":
+        connections, matrix = sphere(resolution, mesh, volume)
+        removeWrapping(matrix)
+        name = "sphere.png"
+        image = imaging(matrix, connections, name)
+    elif shape == "cone":
+        connections, matrix = cone(resolution, mesh, volume)
+        removeWrapping(matrix)
+        name = "cone.png"
+        image = imaging(matrix, connections, name)
+    else:
+        print("WIP: try using cube, sphere, cone, or scene instead")
+        sys.exit(1)
+
+
+
+
