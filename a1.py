@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-import math, time, sys, array, itertools
+import math, time, sys, array, itertools, os
 import numpy as np
 from PIL import Image
 
@@ -305,7 +305,7 @@ def connectCircle(res, key, axis, points, volume):
     return connectList
 
 
-def sphere(resolution, mesh, vol):
+def sphere(resolution, mesh, vol, isScene):
     """Creates a sphere
     This function will create a sphere
 
@@ -348,15 +348,15 @@ def sphere(resolution, mesh, vol):
 
     newMatrix = matrix + test
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the x axis by?"))
 
     xTransform(newMatrix, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the y axis by?"))
 
     yTransform(newMatrix, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the z axis by?"))
 
     yTransform(newMatrix, angle)
 
@@ -368,7 +368,7 @@ def sphere(resolution, mesh, vol):
     return connections, newMatrix
 
 
-def cone(res, mesh, vol):
+def cone(res, mesh, vol, isScene):
     """Creates a cone
 
     This funciton will create a mesh of a cone
@@ -415,15 +415,15 @@ def cone(res, mesh, vol):
         print("not a valid mesh")
         sys.exit(1)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
 
     xTransform(newMatrix, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cone on the y axis by?"))
 
     yTransform(newMatrix, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cone on the z axis by?"))
 
     yTransform(newMatrix, angle)
 
@@ -435,7 +435,7 @@ def cone(res, mesh, vol):
     return connections, newMatrix
 
 
-def cube(res, mesh):
+def cube(res, mesh, isScene):
     """Create a cube
 
     This function will create the points which make up a cube
@@ -494,15 +494,15 @@ def cube(res, mesh):
         connections[key] = connect(coordList, key)
 
     # transform the x and y coordinates to make 3d shape more clear
-    angle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cube on the x axis by?"))
 
     xTransform(coordList, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cube on the y axis by?"))
 
     yTransform(coordList, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
+    angle = float(input("What angle (in radians) do you wish to rotate the cube on the z axis by?"))
 
     yTransform(coordList, angle)
 
@@ -569,12 +569,36 @@ def grid(resolution, points):
     return newFinal
 
 
-def scene(image1, image2, image3):
+def scene(mesh, resolution, volume, isScene):
+
+    connections, matrix = cube(resolution, mesh, isScene)
+    removeWrapping(matrix)
+    name = "cube.png"
+    image1 = imaging(matrix, connections, name)
+
+    connections, matrix = sphere(resolution, mesh, volume, isScene)
+    removeWrapping(matrix)
+    name = "sphere.png"
+    image2 = imaging(matrix, connections, name)
+
+    connections, matrix = cone(resolution, mesh, volume, isScene)
+    removeWrapping(matrix)
+    name = "cone.png"
+    image3 = imaging(matrix, connections, name)
+
+    print(image1)
+
+    inter1 = np.maximum(image1, image2)
+    inter2 = np.maximum(image2, image3)
+    final = np.maximum(inter1, inter2)
+
+    img = Image.fromarray(final, 'RGB')
+    img.save("final.png")
 
     return 0
 
 
-def imaging(matrix, connection, name):
+def imaging(matrix, connections, name):
     # create an image matrix that is empty
     image = [[RGB(0, 0, 0) for j in range(800)] for k in range(800)]
 
@@ -602,7 +626,7 @@ def imaging(matrix, connection, name):
     img = Image.fromarray(arr, 'RGB')
     img.save(name)
 
-    return img
+    return arr
 
 
 def removeWrapping(matrix):
@@ -619,7 +643,6 @@ def removeWrapping(matrix):
 
 if __name__ == "__main__":
 
-
     if len(sys.argv) != 5:
         print("not enough arguments")
         sys.exit(1)
@@ -631,20 +654,22 @@ if __name__ == "__main__":
 
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
-        connections, matrix = cube(resolution, mesh)
+        connections, matrix = cube(resolution, mesh, False)
         removeWrapping(matrix)
         name = "cube.png"
         image = imaging(matrix, connections, name)
     elif shape == "sphere":
-        connections, matrix = sphere(resolution, mesh, volume)
+        connections, matrix = sphere(resolution, mesh, volume, False)
         removeWrapping(matrix)
         name = "sphere.png"
         image = imaging(matrix, connections, name)
     elif shape == "cone":
-        connections, matrix = cone(resolution, mesh, volume)
+        connections, matrix = cone(resolution, mesh, volume, False)
         removeWrapping(matrix)
         name = "cone.png"
         image = imaging(matrix, connections, name)
+    elif shape == "scene":
+        scene(mesh, resolution, volume, True)
     else:
         print("WIP: try using cube, sphere, cone, or scene instead")
         sys.exit(1)
