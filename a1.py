@@ -73,6 +73,7 @@ def xTransform(points, angle):
         i.set_y(newy)
         i.set_z(newz)
 
+
 def translate(points, factor):
 
     for i in points:
@@ -86,17 +87,59 @@ def translate(points, factor):
         i.set_y(newy)
 
 
-def rotation(points, angle):
+def rotation(points, xangle, yangle, zangle):
+
+    axis = [400, 400, 400]
+
+    norm = [float(i)/sum(axis) for i in axis]
 
     for i in points:
         x = i.get_x()
         y = i.get_y()
+        z = i.get_z()
 
-        newx = int(x * math.cos(angle) - y * math.sin(angle))
-        newy = int(x * math.sin(angle) + y * math.cos(angle))
+        cosAngle = math.cos(xangle)
+        sinAngle = math.sin(xangle)
 
-        i.set_x(newx)
-        i.set_y(newy)
+        newX = 0
+
+        newX += (cosAngle + (1 - cosAngle) * (norm[0]**2)) * x
+        newX += ((1 - cosAngle) * norm[0] * norm[1] - norm[2] * sinAngle) * y
+        newX += ((1 - cosAngle) * norm[0] * norm[2] + norm[1] * sinAngle) * z
+
+        i.set_x(int(newX))
+
+    for i in points:
+        x = i.get_x()
+        y = i.get_y()
+        z = i.get_z()
+
+        cosAngle = math.cos(yangle)
+        sinAngle = math.sin(yangle)
+
+        newY = 0
+
+        newY += ((1 - cosAngle) * norm[0] * norm[1] + norm[2] * sinAngle) * x
+        newY += (cosAngle + (1 - cosAngle) * (norm[1]**2)) * y
+        newY += ((1 - cosAngle) * norm[1] * norm[2] - norm[0] * sinAngle) * z
+
+        i.set_y(int(newY))
+
+    for i in points:
+        x = i.get_x()
+        y = i.get_y()
+        z = i.get_z()
+
+        cosAngle = math.cos(zangle)
+        sinAngle = math.sin(zangle)
+
+        newZ = 0
+
+        newZ += ((1 - cosAngle) * norm[0] * norm[1] - norm[2] * sinAngle) * x
+        newZ += ((1 - cosAngle) * norm[1] * norm[2] + norm[1] * sinAngle) * y
+        newZ += (cosAngle + (1 - cosAngle) * (norm[1]**2)) * z
+
+        i.set_y(int(newZ))
 
 
 def yTransform(points, angle):
@@ -380,9 +423,9 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         # zTransform(newMatrix, zangle)
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 250)
-            k.set_y(k.yCoord + 175)
-            k.set_z(k.zCoord + 200)
+            k.set_x(k.xCoord + 400)
+            k.set_y(k.yCoord + 400)
+            k.set_z(k.zCoord + 400)
 
     else:
 
@@ -457,9 +500,9 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         # zTransform(newMatrix, zangle)
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 250)
-            k.set_y(k.yCoord + 580)
-            k.set_z(k.zCoord + 300)
+            k.set_x(k.xCoord + 400)
+            k.set_y(k.yCoord + 400)
+            k.set_z(k.zCoord + 400)
     else:
 
         angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
@@ -545,7 +588,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
         for k in coordList:
             k.set_x(k.xCoord + 400)
-            k.set_y(k.yCoord + 450)
+            k.set_y(k.yCoord + 400)
             k.set_z(k.zCoord + 400)
 
     else:
@@ -665,13 +708,20 @@ def scene(mesh, resolution, volume, isScene):
 
     flattened = [val for sublist in matricies for val in sublist]
 
-    translate(flattened, 400)
-    rotation(flattened, xangle)
-    translate(flattened, -400)
+    rotation(flattened, xangle, yangle, zangle)
+
+
+
+    # translate(flattened, 400)
+    # xTransform(flattened, xangle)
+    # translate(flattened, -400)
 
     # rotation(flattened, yangle)
 
     removeWrapping(flattened)
+
+    for i in flattened:
+        print(i.send_vals())
 
     image, matrix4 = imaging(flattened, connectionsDict, "final.png")
 
@@ -695,8 +745,12 @@ def spherical(matrix, xAngle, yAngle):
 
 
 def imaging(matrix, connections, name):
+
+    # limitx = max(x[0].get_x() for x in matrix)
+    # limity = max(x[1].get_y() for x in matrix)
+
     # create an image matrix that is empty
-    image = [[RGB(0, 0, 0) for j in range(900)] for k in range(900)]
+    image = [[RGB(0, 0, 0) for j in range(1000)] for k in range(1000)]
 
     # place a value of 255 on the image where the cube will be
     for i in matrix:
@@ -730,11 +784,11 @@ def removeWrapping(matrix):
         if k.get_x() < 0:
             k.set_x(0)
         elif k.get_x() > 900:
-            k.set_x(900)
+            k.set_x(899)
         elif k.get_y() < 0:
             k.set_y(0)
         elif k.get_y() > 900:
-            k.set_y(900)
+            k.set_y(899)
 
 
 if __name__ == "__main__":
