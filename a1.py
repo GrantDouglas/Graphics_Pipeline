@@ -73,6 +73,31 @@ def xTransform(points, angle):
         i.set_y(newy)
         i.set_z(newz)
 
+def translate(points, factor):
+
+    for i in points:
+        x = i.get_x()
+        y = i.get_y()
+
+        newx = x - factor
+        newy = y - factor
+
+        i.set_x(newx)
+        i.set_y(newy)
+
+
+def rotation(points, angle):
+
+    for i in points:
+        x = i.get_x()
+        y = i.get_y()
+
+        newx = int(x * math.cos(angle) - y * math.sin(angle))
+        newy = int(x * math.sin(angle) + y * math.cos(angle))
+
+        i.set_x(newx)
+        i.set_y(newy)
+
 
 def yTransform(points, angle):
     """Transform points in the y axis
@@ -305,7 +330,7 @@ def connectCircle(res, key, axis, points, volume):
     return connectList
 
 
-def sphere(resolution, mesh, vol, isScene):
+def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     """Creates a sphere
     This function will create a sphere
 
@@ -348,27 +373,37 @@ def sphere(resolution, mesh, vol, isScene):
 
     newMatrix = matrix + test
 
-    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the x axis by?"))
+    if isScene:
 
-    xTransform(newMatrix, angle)
+        # xTransform(newMatrix, xangle)
+        # yTransform(newMatrix, yangle)
+        # zTransform(newMatrix, zangle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the y axis by?"))
+        for k in newMatrix:
+            k.set_x(k.xCoord + 250)
+            k.set_y(k.yCoord + 175)
+            k.set_z(k.zCoord + 200)
 
-    yTransform(newMatrix, angle)
+    else:
 
-    angle = float(input("What angle (in radians) do you wish to rotate the sphere on the z axis by?"))
+        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the x axis by?"))
+        xTransform(newMatrix, angle)
 
-    yTransform(newMatrix, angle)
+        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the y axis by?"))
+        yTransform(newMatrix, angle)
 
-    for k in newMatrix:
-        k.set_x(k.xCoord+300)
-        k.set_y(k.yCoord+400)
-        k.set_z(k.zCoord+400)
+        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the z axis by?"))
+        yTransform(newMatrix, angle)
+
+        for k in newMatrix:
+            k.set_x(k.xCoord+300)
+            k.set_y(k.yCoord+400)
+            k.set_z(k.zCoord+400)
 
     return connections, newMatrix
 
 
-def cone(res, mesh, vol, isScene):
+def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     """Creates a cone
 
     This funciton will create a mesh of a cone
@@ -415,27 +450,36 @@ def cone(res, mesh, vol, isScene):
         print("not a valid mesh")
         sys.exit(1)
 
-    angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
+    if isScene:
 
-    xTransform(newMatrix, angle)
+        # xTransform(newMatrix, xangle)
+        # yTransform(newMatrix, yangle)
+        # zTransform(newMatrix, zangle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate the cone on the y axis by?"))
+        for k in newMatrix:
+            k.set_x(k.xCoord + 250)
+            k.set_y(k.yCoord + 580)
+            k.set_z(k.zCoord + 300)
+    else:
 
-    yTransform(newMatrix, angle)
+        angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
+        xTransform(newMatrix, angle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate the cone on the z axis by?"))
+        angle = float(input("What angle (in radians) do you wish to rotate the cone on the y axis by?"))
+        yTransform(newMatrix, angle)
 
-    yTransform(newMatrix, angle)
+        angle = float(input("What angle (in radians) do you wish to rotate the cone on the z axis by?"))
+        yTransform(newMatrix, angle)
 
-    for k in newMatrix:
-        k.set_x(k.xCoord + 200)
-        k.set_y(k.yCoord + 200)
-        k.set_z(k.zCoord + 200)
+        for k in newMatrix:
+            k.set_x(k.xCoord + 200)
+            k.set_y(k.yCoord + 200)
+            k.set_z(k.zCoord + 200)
 
     return connections, newMatrix
 
 
-def cube(res, mesh, isScene):
+def cube(res, mesh, isScene, xangle, yangle, zangle):
     """Create a cube
 
     This function will create the points which make up a cube
@@ -493,24 +537,35 @@ def cube(res, mesh, isScene):
     for key in coordSet:
         connections[key] = connect(coordList, key)
 
-    # transform the x and y coordinates to make 3d shape more clear
-    angle = float(input("What angle (in radians) do you wish to rotate the cube on the x axis by?"))
+    if isScene:
 
-    xTransform(coordList, angle)
+        # xTransform(coordList, xangle)
+        # yTransform(coordList, yangle)
+        # zTransform(coordList, zangle)
 
-    angle = float(input("What angle (in radians) do you wish to rotate the cube on the y axis by?"))
+        for k in coordList:
+            k.set_x(k.xCoord + 400)
+            k.set_y(k.yCoord + 450)
+            k.set_z(k.zCoord + 400)
 
-    yTransform(coordList, angle)
+    else:
+        # transform the x and y coordinates to make 3d shape more clear
 
-    angle = float(input("What angle (in radians) do you wish to rotate the cube on the z axis by?"))
 
-    yTransform(coordList, angle)
+        angle = float(input("What angle (in radians) do you wish to rotate the cube on the x axis by?"))
+        xTransform(coordList, angle)
 
-    # move the square to the middle of the image for a cleaner look
-    for k in coordList:
-        k.set_x(k.xCoord + 300)
-        k.set_y(k.yCoord + 400)
-        k.set_z(k.zCoord + 400)
+        angle = float(input("What angle (in radians) do you wish to rotate the cube on the y axis by?"))
+        yTransform(coordList, angle)
+
+        angle = float(input("What angle (in radians) do you wish to rotate the cube on the z axis by?"))
+        zTransform(coordList, angle)
+
+        # move the square to the middle of the image for a cleaner look
+        for k in coordList:
+            k.set_x(k.xCoord + 300)
+            k.set_y(k.yCoord + 400)
+            k.set_z(k.zCoord + 400)
 
     return connections, matrix
 
@@ -571,36 +626,77 @@ def grid(resolution, points):
 
 def scene(mesh, resolution, volume, isScene):
 
-    connections, matrix = cube(resolution, mesh, isScene)
-    removeWrapping(matrix)
-    name = "cube.png"
-    image1 = imaging(matrix, connections, name)
+    xangle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
 
-    connections, matrix = sphere(resolution, mesh, volume, isScene)
-    removeWrapping(matrix)
-    name = "sphere.png"
-    image2 = imaging(matrix, connections, name)
+    yangle = float(input("What angle (in radians) do you wish to rotate on the y axis by?"))
 
-    connections, matrix = cone(resolution, mesh, volume, isScene)
-    removeWrapping(matrix)
-    name = "cone.png"
-    image3 = imaging(matrix, connections, name)
+    zangle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
 
-    print(image1)
+    matricies = []
+    connectionsDict = {}
 
-    inter1 = np.maximum(image1, image2)
-    inter2 = np.maximum(image2, image3)
-    final = np.maximum(inter1, inter2)
+    connections, matrix1 = cube(resolution, mesh, isScene, xangle, yangle, zangle)
+    removeWrapping(matrix1)
 
-    img = Image.fromarray(final, 'RGB')
-    img.save("final.png")
+    connectionsDict.update(connections)
+
+    # name = "cube.png"
+    # image1, matrix1 = imaging(matrix, connections, name)
+
+    connections, matrix2 = sphere(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    removeWrapping(matrix2)
+
+    connectionsDict.update(connections)
+
+    # name = "sphere.png"
+    # image2, matrix2 = imaging(matrix, connections, name)
+
+    connections, matrix3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    removeWrapping(matrix3)
+
+    connectionsDict.update(connections)
+
+    # name = "cone.png"
+    # image3, matrix3 = imaging(matrix, connections, name)
+
+    matricies.append(matrix1)
+    matricies.append(matrix2)
+    matricies.append(matrix3)
+
+    flattened = [val for sublist in matricies for val in sublist]
+
+    translate(flattened, 400)
+    rotation(flattened, xangle)
+    translate(flattened, -400)
+
+    # rotation(flattened, yangle)
+
+    removeWrapping(flattened)
+
+    image, matrix4 = imaging(flattened, connectionsDict, "final.png")
 
     return 0
 
 
+def spherical(matrix, xAngle, yAngle):
+    for i in matrix:
+        for j in i:
+            r = math.sqrt(j.get_x()**2 + j.get_y()**2 + j.get_z()**2)
+            theta = xAngle
+            alpha = yAngle
+
+            newX = int(r * math.cos(theta) * math.sin(alpha))
+            newY = int(r * math.sin(theta) * math.sin(alpha))
+            newZ = int(r * math.cos(alpha))
+
+            j.set_x(newX)
+            j.set_y(newY)
+            j.set_z(newZ)
+
+
 def imaging(matrix, connections, name):
     # create an image matrix that is empty
-    image = [[RGB(0, 0, 0) for j in range(800)] for k in range(800)]
+    image = [[RGB(0, 0, 0) for j in range(900)] for k in range(900)]
 
     # place a value of 255 on the image where the cube will be
     for i in matrix:
@@ -626,19 +722,19 @@ def imaging(matrix, connections, name):
     img = Image.fromarray(arr, 'RGB')
     img.save(name)
 
-    return arr
+    return arr, newImage
 
 
 def removeWrapping(matrix):
     for k in matrix:
         if k.get_x() < 0:
             k.set_x(0)
-        elif k.get_x() > 800:
-            k.set_x(800)
+        elif k.get_x() > 900:
+            k.set_x(900)
         elif k.get_y() < 0:
             k.set_y(0)
-        elif k.get_y() > 800:
-            k.set_y(800)
+        elif k.get_y() > 900:
+            k.set_y(900)
 
 
 if __name__ == "__main__":
@@ -654,17 +750,17 @@ if __name__ == "__main__":
 
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
-        connections, matrix = cube(resolution, mesh, False)
+        connections, matrix = cube(resolution, mesh, False, 0, 0, 0)
         removeWrapping(matrix)
         name = "cube.png"
         image = imaging(matrix, connections, name)
     elif shape == "sphere":
-        connections, matrix = sphere(resolution, mesh, volume, False)
+        connections, matrix = sphere(resolution, mesh, volume, False, 0, 0, 0)
         removeWrapping(matrix)
         name = "sphere.png"
         image = imaging(matrix, connections, name)
     elif shape == "cone":
-        connections, matrix = cone(resolution, mesh, volume, False)
+        connections, matrix = cone(resolution, mesh, volume, False, 0, 0, 0)
         removeWrapping(matrix)
         name = "cone.png"
         image = imaging(matrix, connections, name)
