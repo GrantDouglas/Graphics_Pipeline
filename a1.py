@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-import math, time, sys, array, itertools, os
+import math, time, sys, array, itertools, os, copy
 import numpy as np
 from PIL import Image
 
@@ -398,6 +398,29 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         sys.exit(1)
 
     newMatrix = matrix + test
+
+    secondCircle = copy.deepcopy(newMatrix)
+    secondTest = copy.deepcopy(test)
+
+    testTuple = tuple(test)
+
+    for k in secondCircle:
+        k.set_z(k.zCoord + 200)
+
+    for k in secondTest:
+        k.set_z(k.zCoord + 200)
+
+    connections[secondCircle[0]] = secondTest
+
+    secondMatrix = secondCircle + secondTest
+
+    # print(secondCircle[0].send_vals())
+    # for k in test:
+    #     print(k.send_vals())
+
+    # connections[secondCircle[0]] = test
+
+    newMatrix.extend(secondMatrix)
 
     if isScene:
 
