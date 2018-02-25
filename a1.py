@@ -79,67 +79,50 @@ def translate(points, factor):
     for i in points:
         x = i.get_x()
         y = i.get_y()
+        z = i.get_z()
 
         newx = x - factor
         newy = y - factor
+        newz = z - factor
 
         i.set_x(newx)
         i.set_y(newy)
+        i.set_z(newz)
 
 
 def rotation(points, xangle, yangle, zangle):
 
-    axis = [400, 400, 400]
-
-    norm = [float(i)/sum(axis) for i in axis]
-
     for i in points:
         x = i.get_x()
         y = i.get_y()
         z = i.get_z()
 
-        cosAngle = math.cos(xangle)
-        sinAngle = math.sin(xangle)
+        newx = int(x * math.cos(zangle) - y * math.sin(zangle))
+        newy = int(x * math.sin(zangle) + y * math.cos(zangle))
 
-        newX = 0
-
-        newX += (cosAngle + (1 - cosAngle) * (norm[0]**2)) * x
-        newX += ((1 - cosAngle) * norm[0] * norm[1] - norm[2] * sinAngle) * y
-        newX += ((1 - cosAngle) * norm[0] * norm[2] + norm[1] * sinAngle) * z
-
-        i.set_x(int(newX))
+        i.set_x(newx)
+        i.set_y(newy)
 
     for i in points:
         x = i.get_x()
-        y = i.get_y()
         z = i.get_z()
 
-        cosAngle = math.cos(yangle)
-        sinAngle = math.sin(yangle)
+        newx = int(x * math.cos(yangle) + z * math.sin(yangle))
+        newz = int(z * math.cos(yangle) - x * math.sin(yangle))
 
-        newY = 0
-
-        newY += ((1 - cosAngle) * norm[0] * norm[1] + norm[2] * sinAngle) * x
-        newY += (cosAngle + (1 - cosAngle) * (norm[1]**2)) * y
-        newY += ((1 - cosAngle) * norm[1] * norm[2] - norm[0] * sinAngle) * z
-
-        i.set_y(int(newY))
+        i.set_x(newx)
+        i.set_z(newz)
 
     for i in points:
-        x = i.get_x()
         y = i.get_y()
         z = i.get_z()
 
-        cosAngle = math.cos(zangle)
-        sinAngle = math.sin(zangle)
+        newy = int(y * math.cos(xangle) - z * math.sin(xangle))
+        newz = int(y * math.sin(xangle) + z * math.cos(xangle))
 
-        newZ = 0
+        i.set_y(newy)
+        i.set_z(newz)
 
-        newZ += ((1 - cosAngle) * norm[0] * norm[1] - norm[2] * sinAngle) * x
-        newZ += ((1 - cosAngle) * norm[1] * norm[2] + norm[1] * sinAngle) * y
-        newZ += (cosAngle + (1 - cosAngle) * (norm[1]**2)) * z
-
-        i.set_y(int(newZ))
 
 
 def yTransform(points, angle):
@@ -423,9 +406,9 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         # zTransform(newMatrix, zangle)
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 400)
-            k.set_y(k.yCoord + 400)
-            k.set_z(k.zCoord + 400)
+            k.set_x(k.xCoord + 250)
+            k.set_y(k.yCoord + 225)
+            k.set_z(k.zCoord + 550)
 
     else:
 
@@ -500,9 +483,9 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         # zTransform(newMatrix, zangle)
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 400)
-            k.set_y(k.yCoord + 400)
-            k.set_z(k.zCoord + 400)
+            k.set_x(k.xCoord + 250)
+            k.set_y(k.yCoord + 630)
+            k.set_z(k.zCoord + 550)
     else:
 
         angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
@@ -588,7 +571,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
         for k in coordList:
             k.set_x(k.xCoord + 400)
-            k.set_y(k.yCoord + 400)
+            k.set_y(k.yCoord + 500)
             k.set_z(k.zCoord + 400)
 
     else:
@@ -708,13 +691,9 @@ def scene(mesh, resolution, volume, isScene):
 
     flattened = [val for sublist in matricies for val in sublist]
 
+    translate(flattened, 500)
     rotation(flattened, xangle, yangle, zangle)
-
-
-
-    # translate(flattened, 400)
-    # xTransform(flattened, xangle)
-    # translate(flattened, -400)
+    translate(flattened, -500)
 
     # rotation(flattened, yangle)
 
