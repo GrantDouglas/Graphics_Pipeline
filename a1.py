@@ -204,6 +204,20 @@ def rasterize(point1, point2, image):
         image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
 
+def dotProduct(p1, p2):
+    return sum(x * y for x, y in zip(p1, p2))
+
+
+def crossProduct(vect_A, vect_B):
+
+    cross = [0, 0, 0]
+    cross[0] = vect_A[1] * vect_B[2] - vect_A[2] * vect_B[1]
+    cross[1] = vect_A[0] * vect_B[2] - vect_A[2] * vect_B[0]
+    cross[2] = vect_A[0] * vect_B[1] - vect_A[1] * vect_B[0]
+
+    return cross
+
+
 def connect(matrix, key):
     """creates a connection between a point and all neighbouring points
 
@@ -227,12 +241,21 @@ def connect(matrix, key):
 
     for x in matrix:
         if (x.get_x() == key.get_y() and x.get_y() == key.get_x() and x.get_z() == key.get_z())\
-        or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y())\
-        or (x.get_y() == key.get_z() and x.get_z() == key.get_y() and x.get_x() == key.get_x()):
+        or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y()):
 
             connectionPoints.append(x)
 
     return connectionPoints
+
+
+def vector(point1, point2):
+    x = point2.get_x() - point1.get_x()
+    y = point2.get_y() - point1.get_y()
+    z = point2.get_z() - point1.get_z()
+
+    vec = [x, y, z]
+
+    return vec
 
 
 def circleCoords(startX, startY, radius, axis, res, vol):
@@ -356,9 +379,9 @@ def connectCircle(res, key, axis, points, volume):
     return connectList
 
 
-def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
-    """Creates a sphere
-    This function will create a sphere
+def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
+    """Creates a cylinder
+    This function will create a cylinder
 
     Arguments:
         resolution {int} -- The number of triangles to create
@@ -366,7 +389,7 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     Returns:
         List -- A dictionary where each key is a coord object, and it maps to a list of coord objects
-        List -- A matrix which contains coord objects for each point of the sphere
+        List -- A matrix which contains coord objects for each point of the cylinder
     """
     points, angles = circleCoords(vol, 0, vol, 'x', resolution, vol)
     finalPoints = []
@@ -402,8 +425,6 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     secondCircle = copy.deepcopy(newMatrix)
     secondTest = copy.deepcopy(test)
 
-    testTuple = tuple(test)
-
     for k in secondCircle:
         k.set_z(k.zCoord + 200)
 
@@ -412,36 +433,31 @@ def sphere(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     connections[secondCircle[0]] = secondTest
 
+    for k in range(0, len(secondTest)):
+        testing = []
+        testing.append(secondTest[k])
+        connections[test[k]] = testing
+
     secondMatrix = secondCircle + secondTest
-
-    # print(secondCircle[0].send_vals())
-    # for k in test:
-    #     print(k.send_vals())
-
-    # connections[secondCircle[0]] = test
 
     newMatrix.extend(secondMatrix)
 
     if isScene:
 
-        # xTransform(newMatrix, xangle)
-        # yTransform(newMatrix, yangle)
-        # zTransform(newMatrix, zangle)
-
         for k in newMatrix:
             k.set_x(k.xCoord + 250)
             k.set_y(k.yCoord + 225)
-            k.set_z(k.zCoord + 550)
+            k.set_z(k.zCoord + 450)
 
     else:
 
-        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the x axis by?"))
+        angle = float(input("What angle (in radians) do you wish to rotate the cylinder on the x axis by?"))
         xTransform(newMatrix, angle)
 
-        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the y axis by?"))
+        angle = float(input("What angle (in radians) do you wish to rotate the cylinder on the y axis by?"))
         yTransform(newMatrix, angle)
 
-        angle = float(input("What angle (in radians) do you wish to rotate the sphere on the z axis by?"))
+        angle = float(input("What angle (in radians) do you wish to rotate the cylinder on the z axis by?"))
         yTransform(newMatrix, angle)
 
         for k in newMatrix:
@@ -501,10 +517,6 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
 
     if isScene:
 
-        # xTransform(newMatrix, xangle)
-        # yTransform(newMatrix, yangle)
-        # zTransform(newMatrix, zangle)
-
         for k in newMatrix:
             k.set_x(k.xCoord + 250)
             k.set_y(k.yCoord + 630)
@@ -539,7 +551,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
    Returns:
         List -- A dictionary where each key is a coord object, and it maps to a list of coord objects
-        List -- A matrix which contains coord objects for each point of the sphere
+        List -- A matrix which contains coord objects for each point of the cylinder
     """
     points = [
         [128, 128, -128],
@@ -588,10 +600,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
     if isScene:
 
-        # xTransform(coordList, xangle)
-        # yTransform(coordList, yangle)
-        # zTransform(coordList, zangle)
-
         for k in coordList:
             k.set_x(k.xCoord + 400)
             k.set_y(k.yCoord + 500)
@@ -599,7 +607,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
     else:
         # transform the x and y coordinates to make 3d shape more clear
-
 
         angle = float(input("What angle (in radians) do you wish to rotate the cube on the x axis by?"))
         xTransform(coordList, angle)
@@ -692,12 +699,12 @@ def scene(mesh, resolution, volume, isScene):
     # name = "cube.png"
     # image1, matrix1 = imaging(matrix, connections, name)
 
-    connections, matrix2 = sphere(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
     removeWrapping(matrix2)
 
     connectionsDict.update(connections)
 
-    # name = "sphere.png"
+    # name = "cylinder.png"
     # image2, matrix2 = imaging(matrix, connections, name)
 
     connections, matrix3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
@@ -721,9 +728,6 @@ def scene(mesh, resolution, volume, isScene):
     # rotation(flattened, yangle)
 
     removeWrapping(flattened)
-
-    for i in flattened:
-        print(i.send_vals())
 
     image, matrix4 = imaging(flattened, connectionsDict, "final.png")
 
@@ -810,10 +814,10 @@ if __name__ == "__main__":
         removeWrapping(matrix)
         name = "cube.png"
         image = imaging(matrix, connections, name)
-    elif shape == "sphere":
-        connections, matrix = sphere(resolution, mesh, volume, False, 0, 0, 0)
+    elif shape == "cylinder":
+        connections, matrix = cylinder(resolution, mesh, volume, False, 0, 0, 0)
         removeWrapping(matrix)
-        name = "sphere.png"
+        name = "cylinder.png"
         image = imaging(matrix, connections, name)
     elif shape == "cone":
         connections, matrix = cone(resolution, mesh, volume, False, 0, 0, 0)
@@ -823,7 +827,7 @@ if __name__ == "__main__":
     elif shape == "scene":
         scene(mesh, resolution, volume, True)
     else:
-        print("WIP: try using cube, sphere, cone, or scene instead")
+        print("WIP: try using cube, cylinder, cone, or scene instead")
         sys.exit(1)
 
 
