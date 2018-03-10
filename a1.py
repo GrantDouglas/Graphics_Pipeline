@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 
-import math, time, sys, array, itertools, os, copy
+import math, time, sys, array, os, copy, itertools
+from itertools import cycle
 import numpy as np
 from PIL import Image
 
@@ -204,8 +205,15 @@ def rasterize(point1, point2, image):
         image[math.ceil(x)][math.ceil(y)].cBlue = 255
 
 
-def dotProduct(p1, p2):
-    return sum(x * y for x, y in zip(p1, p2))
+def dotProduct(v1, v2):
+    return sum([i*j for (i, j) in zip(v1, v2)])
+
+def vectorSub(p1, p2):
+    return [a - b for a, b in zip(p1, p2)]
+
+
+def vectorAdd(p1, p2):
+    return [a + b for a, b in zip(p1, p2)]
 
 
 def crossProduct(vect_A, vect_B):
@@ -218,7 +226,7 @@ def crossProduct(vect_A, vect_B):
     return cross
 
 
-def connect(matrix, key):
+def connect(matrix, key, gap, res):
     """creates a connection between a point and all neighbouring points
 
     This function will create a connection between a point and multiple others
@@ -234,14 +242,18 @@ def connect(matrix, key):
     connectionPoints = []
 
     for x in matrix:
-        if (x.send_vals()[0] - key.send_vals()[0] == 0 and x.send_vals()[2] == key.send_vals()[2])\
-        or (x.send_vals()[1] - key.send_vals()[1] == 0 and x.send_vals()[2] == key.send_vals()[2])\
-        or (x.send_vals()[2] - key.send_vals()[2] != 0 and x.send_vals()[1] == key.send_vals()[1] and x.send_vals()[0] == key.send_vals()[0]):
+        if (x.get_x() - key.get_x() == 0 and x.get_z() == key.get_z())\
+        or (x.get_y() - key.get_y() == 0 and x.get_z() == key.get_z())\
+        or (x.get_z() - key.get_z() != 0 and x.get_y() == key.get_y() and x.get_x() == key.get_x()):
             connectionPoints.append(x)
+
+    origin = matrix[1]
+
 
     for x in matrix:
         if (x.get_x() == key.get_y() and x.get_y() == key.get_x() and x.get_z() == key.get_z())\
-        or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y()):
+        or (x.get_z() == key.get_x() and x.get_x() == key.get_z() and x.get_y() == key.get_y())\
+        or (x.get_z() == key.get_y() and x.get_y() == key.get_z() and x.get_x() == key.get_x()):
 
             connectionPoints.append(x)
 
@@ -426,10 +438,10 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     secondTest = copy.deepcopy(test)
 
     for k in secondCircle:
-        k.set_z(k.zCoord + 200)
+        k.set_z(k.zCoord + vol*1.5)
 
     for k in secondTest:
-        k.set_z(k.zCoord + 200)
+        k.set_z(k.zCoord + vol*1.5)
 
     connections[secondCircle[0]] = secondTest
 
@@ -445,9 +457,9 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     if isScene:
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 250)
-            k.set_y(k.yCoord + 225)
-            k.set_z(k.zCoord + 450)
+            k.set_x(k.xCoord + 250 + (vol/4))
+            k.set_y(k.yCoord + 225 + (vol/4))
+            k.set_z(k.zCoord + 450 - vol)
 
     else:
 
@@ -518,9 +530,9 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     if isScene:
 
         for k in newMatrix:
-            k.set_x(k.xCoord + 250)
-            k.set_y(k.yCoord + 630)
-            k.set_z(k.zCoord + 550)
+            k.set_x(k.xCoord + 400-vol)
+            k.set_y(k.yCoord + 500+2*(vol/2))
+            k.set_z(k.zCoord + 550+vol/4)
     else:
 
         angle = float(input("What angle (in radians) do you wish to rotate the cone on the x axis by?"))
@@ -540,7 +552,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     return connections, newMatrix
 
 
-def cube(res, mesh, isScene, xangle, yangle, zangle):
+def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     """Create a cube
 
     This function will create the points which make up a cube
@@ -554,18 +566,18 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
         List -- A matrix which contains coord objects for each point of the cylinder
     """
     points = [
-        [128, 128, -128],
-        [-128, 128, -128],
-        [128, -128, -128],
-        [-128, -128, -128],
-        [128, 128, 128],
-        [-128, 128, 128],
-        [128, -128, 128],
-        [-128, -128, 128]
+        [vol, vol, -vol],
+        [-vol, vol, -vol],
+        [vol, -vol, -vol],
+        [-vol, -vol, -vol],
+        [vol, vol, vol],
+        [-vol, vol, vol],
+        [vol, -vol, vol],
+        [-vol, -vol, vol]
         ]
 
     if mesh == "tri":
-        triangGrid = grid(res, points)
+        triangGrid, gap = grid(res, points, vol)
         newPoints = triangGrid + points
     elif mesh == "poly":
         newPoints = points
@@ -596,7 +608,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
 
     # create a dictionary which maps each point to a list of connected points
     for key in coordSet:
-        connections[key] = connect(coordList, key)
+        connections[key] = connect(coordList, key, gap, resolution)
 
     if isScene:
 
@@ -626,7 +638,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle):
     return connections, matrix
 
 
-def grid(resolution, points):
+def grid(resolution, points, vol):
     """Create a grid on a square surface
 
     This function will create a grid of a specified resolution onto a surface identified by coordinates
@@ -638,6 +650,8 @@ def grid(resolution, points):
     Returns:
         list -- A list of points which
     """
+
+
     new = list(itertools.combinations(points, 2))
     final = []
 
@@ -652,16 +666,25 @@ def grid(resolution, points):
 
         # place grid points on z axis lines if the z axis are equal
         if x[1][2] - x[0][2] != 0:
+
             gap = int((abs(x[0][2]) + abs(x[1][2])) / resolution)
+            print(gap)
             start = min(x[0][2], x[1][2])
             end = max(x[0][2], x[1][2])
 
             for k in range(start, end, gap):
                 newFinal.append([x[0][0], x[0][1], k])
 
+            nd = 2*vol
+            n = int(math.sqrt(resolution))
+            d = nd / n
+            c = [i * d + d/2 for i in range(n)]
+            test = [[(x, y, x[1][2]) for x in c] for y in c]
+
         # place grid points on y axis lines if the x axis are equal
         elif x[1][0] - x[0][0] == 0:
             gap = int((abs(x[0][1]) + abs(x[1][1])) / resolution)
+            print(gap)
             start = min(x[0][1], x[1][1])
             end = max(x[0][1], x[1][1])
 
@@ -671,16 +694,58 @@ def grid(resolution, points):
         # place grid points on x axis lines if the y axis are equal
         elif x[1][1] - x[0][1] == 0:
             gap = int((abs(x[0][0]) + abs(x[1][0])) / resolution)
+            print(gap)
             start = min(x[0][0], x[1][0])
             end = max(x[0][0], x[1][0])
 
             for k in range(start, end, gap):
                 newFinal.append([k, x[0][1], x[0][2]])
 
-    return newFinal
+
+    # nd = 2*vol
+    # n = int(math.sqrt(resolution))
+    # d = nd / d
+    # c = [i * d + d/2 for i in range(n)]
+    # test = [[(x,y) for x in c] for y in c]
+
+
+
+    return newFinal, gap
 
 
 def scene(mesh, resolution, volume, isScene):
+
+    cull = False
+    clip = False
+    HSR = False
+
+    userInput = input("Do you want to use culling? (please enter yes or no)")
+    if userInput == "yes" or userInput == "Yes":
+        cull = True
+    elif userInput == "no" or userInput == "No":
+        cull = False
+    else:
+        print("Not a valid response, Exiting.")
+        sys.exit(1)
+
+    if cull == True:
+        userInput = input("Do you want to use clipping? (please enter yes or no)")
+        if userInput == "yes" or userInput == "Yes":
+            clip = True
+        elif userInput == "no" or userInput == "No":
+            clip = False
+        else:
+            print("Not a valid response, Exiting.")
+            sys.exit(1)
+
+        userInput = input("Do you want to use hidden surface removal? (please enter yes or no)")
+        if userInput == "yes" or userInput == "Yes":
+            HSR = True
+        elif userInput == "no" or userInput == "No":
+            HSR = False
+        else:
+            print("Not a valid response, Exiting.")
+            sys.exit(1)
 
     xangle = float(input("What angle (in radians) do you wish to rotate on the x axis by?"))
 
@@ -691,10 +756,12 @@ def scene(mesh, resolution, volume, isScene):
     matricies = []
     connectionsDict = {}
 
-    connections, matrix1 = cube(resolution, mesh, isScene, xangle, yangle, zangle)
+    connections, matrix1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
 
     connectionsDict.update(connections)
+
+
 
     # name = "cube.png"
     # image1, matrix1 = imaging(matrix, connections, name)
@@ -803,6 +870,7 @@ if __name__ == "__main__":
         print("not enough arguments")
         sys.exit(1)
 
+
     shape = sys.argv[1]
     mesh = sys.argv[2]
     resolution = int(sys.argv[3])
@@ -810,7 +878,7 @@ if __name__ == "__main__":
 
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
-        connections, matrix = cube(resolution, mesh, False, 0, 0, 0)
+        connections, matrix = cube(resolution, mesh, False, 0, 0, 0, volume)
         removeWrapping(matrix)
         name = "cube.png"
         image = imaging(matrix, connections, name)
