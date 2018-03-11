@@ -3,6 +3,7 @@
 
 import math, time, sys, array, os, copy, itertools
 from itertools import cycle
+from operator import attrgetter
 import numpy as np
 from PIL import Image
 
@@ -34,7 +35,7 @@ class coords:
         self.zCoord = z
 
     def send_vals(self):
-        return (self.xCoord, self.yCoord, self.zCoord)
+        return [self.xCoord, self.yCoord, self.zCoord]
 
     def set_x(self, val):
         self.xCoord = val
@@ -206,7 +207,8 @@ def rasterize(point1, point2, image):
 
 
 def dotProduct(v1, v2):
-    return sum([i*j for (i, j) in zip(v1, v2)])
+    return sum(i * j for i, j in zip(v1, v2))
+
 
 def vectorSub(p1, p2):
     return [a - b for a, b in zip(p1, p2)]
@@ -216,14 +218,11 @@ def vectorAdd(p1, p2):
     return [a + b for a, b in zip(p1, p2)]
 
 
-def crossProduct(vect_A, vect_B):
-
-    cross = [0, 0, 0]
-    cross[0] = vect_A[1] * vect_B[2] - vect_A[2] * vect_B[1]
-    cross[1] = vect_A[0] * vect_B[2] - vect_A[2] * vect_B[0]
-    cross[2] = vect_A[0] * vect_B[1] - vect_A[1] * vect_B[0]
-
-    return cross
+def crossProduct(v1, v2):
+    val1 = v1[1] * v2[2] - v1[2] * v1[1]
+    val2 = v1[2] * v2[0] - v1[0] * v2[2]
+    val3 = v1[0] * v2[1] - v1[1] * v2[0]
+    return [val1, val2, val3]
 
 
 def connect(matrix, key, gap, res):
@@ -576,6 +575,8 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
         [-vol, -vol, vol]
         ]
 
+    print(points)
+
     if mesh == "tri":
         triangGrid, gap = grid(res, points, vol)
         newPoints = triangGrid + points
@@ -610,6 +611,18 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     for key in coordSet:
         connections[key] = connect(coordList, key, gap, resolution)
 
+
+    cubeList = []
+
+    for k in coordSet:
+        if k.send_vals() in points:
+            cubeList.append(k)
+
+    # cubeList = coordSet[::res]
+
+    # for k in cubeList:
+    #     print(k.send_vals())
+
     if isScene:
 
         for k in coordList:
@@ -635,7 +648,8 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_y(k.yCoord + 400)
             k.set_z(k.zCoord + 400)
 
-    return connections, matrix
+
+    return connections, matrix, cubeList
 
 
 def grid(resolution, points, vol):
@@ -675,12 +689,6 @@ def grid(resolution, points, vol):
             for k in range(start, end, gap):
                 newFinal.append([x[0][0], x[0][1], k])
 
-            nd = 2*vol
-            n = int(math.sqrt(resolution))
-            d = nd / n
-            c = [i * d + d/2 for i in range(n)]
-            test = [[(x, y, x[1][2]) for x in c] for y in c]
-
         # place grid points on y axis lines if the x axis are equal
         elif x[1][0] - x[0][0] == 0:
             gap = int((abs(x[0][1]) + abs(x[1][1])) / resolution)
@@ -701,16 +709,14 @@ def grid(resolution, points, vol):
             for k in range(start, end, gap):
                 newFinal.append([k, x[0][1], x[0][2]])
 
-
-    # nd = 2*vol
-    # n = int(math.sqrt(resolution))
-    # d = nd / d
-    # c = [i * d + d/2 for i in range(n)]
-    # test = [[(x,y) for x in c] for y in c]
-
-
-
     return newFinal, gap
+
+def dist(p1, p2):
+    return (p1.get_x() - p2.get_x())**2 + (p1.get_y() - p2.get_y())**2
+
+
+def square(p1, p2, p3, p4):
+    print(dist(p1, p2))
 
 
 def scene(mesh, resolution, volume, isScene):
@@ -756,35 +762,58 @@ def scene(mesh, resolution, volume, isScene):
     matricies = []
     connectionsDict = {}
 
-    connections, matrix1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
+    connections, matrix1, cubeList = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
 
     connectionsDict.update(connections)
 
+    for k in cubeList:
+        print(k.send_vals())
+
+    faceDict = {}
+
+    new = list(itertools.combinations(cubeList, 4))
+
+    count = 0
+
+    for k in new:
+        if k[0].get_x() == k[1].get_x() == k[2].get_x() == k[3].get_x():
+            count += 1
+            faceDict[count] = k
+
+        elif k[0].get_y() == k[1].get_y() == k[2].get_y() == k[3].get_y():
+            count += 1
+            faceDict[count] = k
+
+        elif k[0].get_z() == k[1].get_z() == k[2].get_z() == k[3].get_z():
+            count += 1
+            faceDict[count] = k
+
+    print(faceDict)
 
 
     # name = "cube.png"
     # image1, matrix1 = imaging(matrix, connections, name)
 
-    connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    removeWrapping(matrix2)
+    # connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    # removeWrapping(matrix2)
 
-    connectionsDict.update(connections)
+    # connectionsDict.update(connections)
 
-    # name = "cylinder.png"
-    # image2, matrix2 = imaging(matrix, connections, name)
+    # # name = "cylinder.png"
+    # # image2, matrix2 = imaging(matrix, connections, name)
 
-    connections, matrix3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    removeWrapping(matrix3)
+    # connections, matrix3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    # removeWrapping(matrix3)
 
-    connectionsDict.update(connections)
+    # connectionsDict.update(connections)
 
     # name = "cone.png"
     # image3, matrix3 = imaging(matrix, connections, name)
 
     matricies.append(matrix1)
-    matricies.append(matrix2)
-    matricies.append(matrix3)
+    # matricies.append(matrix2)
+    # matricies.append(matrix3)
 
     flattened = [val for sublist in matricies for val in sublist]
 
@@ -792,9 +821,52 @@ def scene(mesh, resolution, volume, isScene):
     rotation(flattened, xangle, yangle, zangle)
     translate(flattened, -500)
 
-    # rotation(flattened, yangle)
+    pointsToRemove = []
+
+    for key, val in faceDict.items():
+        p0 = val[0]
+        p1 = val[1]
+        p2 = val[2]
+
+
+
+        pneg = [val[0].get_x() * -1, val[0].get_y() * -1, val[0].get_z() * -1]
+
+        v1 = vectorSub(p1.send_vals(), p0.send_vals())
+        v2 = vectorSub(p2.send_vals(), p0.send_vals())
+
+        norm = crossProduct(v1, v2)
+
+        result = dotProduct(norm,pneg)
+
+        print(result)
+
+        if result < 0:
+            maxX = max(value.get_x() for value in val)
+            maxY = max(value.get_y() for value in val)
+            maxZ = max(value.get_z() for value in val)
+
+            minX = min(value.get_x() for value in val)
+            minY = min(value.get_y() for value in val)
+            minZ = min(value.get_z() for value in val)
+
+
+            for x in matrix1:
+                if minX <= x.get_x() <= maxX and minY <= x.get_y() <= maxY and minZ <= x.get_z() <= maxZ and x not in pointsToRemove:
+                    pointsToRemove.append(x)
+
+
+    for i in pointsToRemove:
+        flattened.remove(i)
+
+    for i in pointsToRemove:
+        if i in connectionsDict:
+            del connectionsDict[i]
 
     removeWrapping(flattened)
+
+    newFlattened = []
+
 
     image, matrix4 = imaging(flattened, connectionsDict, "final.png")
 
@@ -837,6 +909,8 @@ def imaging(matrix, connections, name):
             rasterize(key, point, image)
 
     newImage = image
+
+
 
     # create a new image matrix with just the colour values of the cells
     for m, i in enumerate(image):
