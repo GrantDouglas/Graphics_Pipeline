@@ -823,6 +823,14 @@ def scene(mesh, resolution, volume, isScene):
 
     pointsToRemove = []
 
+    midPoints = []
+
+    for k, v in faceDict.items():
+        xMid = (v[0].get_x() + v[2].get_x()) / 2
+        yMid = (v[0].get_y() + v[2].get_y()) / 2
+        zMid = (v[0].get_z() + v[2].get_z()) / 2
+        midPoints.append([xMid, yMid, zMid])
+
     for key, val in faceDict.items():
         p0 = val[0]
         p1 = val[1]
