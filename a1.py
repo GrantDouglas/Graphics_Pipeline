@@ -767,9 +767,6 @@ def scene(mesh, resolution, volume, isScene):
 
     connectionsDict.update(connections)
 
-    for k in cubeList:
-        print(k.send_vals())
-
     faceDict = {}
 
     new = list(itertools.combinations(cubeList, 4))
@@ -788,8 +785,6 @@ def scene(mesh, resolution, volume, isScene):
         elif k[0].get_z() == k[1].get_z() == k[2].get_z() == k[3].get_z():
             count += 1
             faceDict[count] = k
-
-    print(faceDict)
 
 
     # name = "cube.png"
@@ -826,10 +821,15 @@ def scene(mesh, resolution, volume, isScene):
     midPoints = []
 
     for k, v in faceDict.items():
-        xMid = (v[0].get_x() + v[2].get_x()) / 2
-        yMid = (v[0].get_y() + v[2].get_y()) / 2
-        zMid = (v[0].get_z() + v[2].get_z()) / 2
+        print(v[0].send_vals(), v[1].send_vals())
+        xMid = (v[0].get_x() + v[1].get_x()) / 2
+        yMid = (v[0].get_y() + v[1].get_y()) / 2
+        zMid = (v[0].get_z() + v[1].get_z()) / 2
         midPoints.append([xMid, yMid, zMid])
+
+    print(midPoints)
+
+    count = 0
 
     for key, val in faceDict.items():
         p0 = val[0]
@@ -838,14 +838,15 @@ def scene(mesh, resolution, volume, isScene):
 
 
 
-        pneg = [val[0].get_x() * -1, val[0].get_y() * -1, val[0].get_z() * -1]
+        pneg = [midPoints[count][0]-500, midPoints[count][1]-500, midPoints[count][2]-500]
+        count += 1
 
         v1 = vectorSub(p1.send_vals(), p0.send_vals())
         v2 = vectorSub(p2.send_vals(), p0.send_vals())
 
         norm = crossProduct(v1, v2)
 
-        result = dotProduct(norm,pneg)
+        result = dotProduct(norm, pneg)
 
         print(result)
 
