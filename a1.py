@@ -894,16 +894,20 @@ def scene(mesh, resolution, volume, isScene):
 
             toKeep = pointDict[key]
 
+
+            # TODO: FIX THIS LOOP ITS WRONG
             for x in toKeep:
                 if x not in temp:
                     temp.append(x)
-
             
 
     print(len(flattened), len(temp))  
 
+    print(temp)
+
     flattened = temp 
-      
+
+
 
 
     #     if result < 0:
