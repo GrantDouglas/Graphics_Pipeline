@@ -1,0 +1,14 @@
+for each face on the shape
+	divide into triangles, and define an order of points
+
+transform the points of the shape
+
+for each transformed face
+	if order of face points != order of original points
+		face is a back face, ignore
+	else
+		face is front face, keep
+
+to determine order of points, get order of points from top to bottom (based on y values)
+	if y vals are the same, get the one with the largest x val first, then its neighbour
+

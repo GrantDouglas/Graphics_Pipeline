@@ -614,9 +614,30 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
 
     cubeList = []
 
-    for k in coordSet:
-        if k.send_vals() in points:
-            cubeList.append(k)
+
+    for k in points:
+        temp = 0
+        for j in coordSet:
+            if k == j.send_vals():
+                stuff = True
+                temp = j
+        if stuff == True:
+            cubeList.append(temp)
+
+    count = 0
+    faceDict = {}
+
+    faceDict[0] = [cubeList[0], cubeList[1] ,cubeList[2], cubeList[3]]
+    faceDict[1] = [cubeList[0], cubeList[1], cubeList[4], cubeList[5]]
+    faceDict[2] = [cubeList[0], cubeList[2], cubeList[4], cubeList[6]]
+    faceDict[3] = [cubeList[7], cubeList[5], cubeList[4], cubeList[6]]
+    faceDict[4] = [cubeList[7], cubeList[3], cubeList[1], cubeList[5]]
+    faceDict[5] = [cubeList[7], cubeList[3], cubeList[6], cubeList[2]]
+
+    # for key, val in faceDict.items():
+    #     print(key)
+    #     for k in val:
+    #         print(k.send_vals())
 
     # cubeList = coordSet[::res]
 
@@ -649,7 +670,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_z(k.zCoord + 400)
 
 
-    return connections, matrix, cubeList
+    return connections, matrix, faceDict
 
 
 def grid(resolution, points, vol):
@@ -762,29 +783,12 @@ def scene(mesh, resolution, volume, isScene):
     matricies = []
     connectionsDict = {}
 
-    connections, matrix1, cubeList = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
+    connections, matrix1, faceDict = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
 
     connectionsDict.update(connections)
 
-    faceDict = {}
-
-    new = list(itertools.combinations(cubeList, 4))
-
-    count = 0
-
-    for k in new:
-        if k[0].get_x() == k[1].get_x() == k[2].get_x() == k[3].get_x():
-            count += 1
-            faceDict[count] = k
-
-        elif k[0].get_y() == k[1].get_y() == k[2].get_y() == k[3].get_y():
-            count += 1
-            faceDict[count] = k
-
-        elif k[0].get_z() == k[1].get_z() == k[2].get_z() == k[3].get_z():
-            count += 1
-            faceDict[count] = k
+    
 
 
     # name = "cube.png"
@@ -818,59 +822,52 @@ def scene(mesh, resolution, volume, isScene):
 
     pointsToRemove = []
 
-    midPoints = []
-
-    for k, v in faceDict.items():
-        print(v[0].send_vals(), v[1].send_vals())
-        xMid = (v[0].get_x() + v[1].get_x()) / 2
-        yMid = (v[0].get_y() + v[1].get_y()) / 2
-        zMid = (v[0].get_z() + v[1].get_z()) / 2
-        midPoints.append([xMid, yMid, zMid])
-
-    print(midPoints)
-
-    count = 0
+    # for key, val in faceDict.items():
+    #     print(key, val)
 
     for key, val in faceDict.items():
-        p0 = val[0]
-        p1 = val[1]
-        p2 = val[2]
+        p0 = val[0].send_vals()
+        p3 = val[3].send_vals()
+        p2 = val[2].send_vals()
 
 
+        pneg = [p0[0] - 500, p0[1] - 500, p0[2] - 800]
 
-        pneg = [midPoints[count][0]-500, midPoints[count][1]-500, midPoints[count][2]-500]
-        count += 1
+        v1 = vectorSub(p3, p0)
+        v2 = vectorSub(p2, p0)
 
-        v1 = vectorSub(p1.send_vals(), p0.send_vals())
-        v2 = vectorSub(p2.send_vals(), p0.send_vals())
+        norm = crossProduct(v2, v1)
 
-        norm = crossProduct(v1, v2)
+        print(norm)
 
         result = dotProduct(norm, pneg)
 
-        print(result)
-
-        if result < 0:
-            maxX = max(value.get_x() for value in val)
-            maxY = max(value.get_y() for value in val)
-            maxZ = max(value.get_z() for value in val)
-
-            minX = min(value.get_x() for value in val)
-            minY = min(value.get_y() for value in val)
-            minZ = min(value.get_z() for value in val)
 
 
-            for x in matrix1:
-                if minX <= x.get_x() <= maxX and minY <= x.get_y() <= maxY and minZ <= x.get_z() <= maxZ and x not in pointsToRemove:
-                    pointsToRemove.append(x)
+        if result > 0:
+            print(key)
+
+    #     if result < 0:
+    #         maxX = max(value.get_x() for value in val)
+    #         maxY = max(value.get_y() for value in val)
+    #         maxZ = max(value.get_z() for value in val)
+
+    #         minX = min(value.get_x() for value in val)
+    #         minY = min(value.get_y() for value in val)
+    #         minZ = min(value.get_z() for value in val)
 
 
-    for i in pointsToRemove:
-        flattened.remove(i)
+    #         for x in matrix1:
+    #             if minX <= x.get_x() <= maxX and minY <= x.get_y() <= maxY and minZ <= x.get_z() <= maxZ and x not in pointsToRemove:
+    #                 pointsToRemove.append(x)
 
-    for i in pointsToRemove:
-        if i in connectionsDict:
-            del connectionsDict[i]
+
+    # for i in pointsToRemove:
+    #     flattened.remove(i)
+
+    # for i in pointsToRemove:
+    #     if i in connectionsDict:
+    #         del connectionsDict[i]
 
     removeWrapping(flattened)
 
