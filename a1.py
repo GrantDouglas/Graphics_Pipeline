@@ -822,8 +822,57 @@ def scene(mesh, resolution, volume, isScene):
 
     pointsToRemove = []
 
+    pointDict = {}
+
+    for k in range(0,6):
+        temp = faceDict[k]
+        pointDict[k] = []
+        print(temp)
+
+        if(temp[0].get_x() == temp[1].get_x() == temp[2].get_x() == temp[3].get_x()):
+            print("found x face in common")
+            max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
+            max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
+
+            min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
+            min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
+
+            for x in flattened:
+                if min_y <= x.get_y() <= max_y and min_z <= x.get_z() <= max_z and x.get_x() == temp[0].get_x():
+                    pointDict[k].append(x)
+
+        elif(temp[0].get_y() == temp[1].get_y() == temp[2].get_y() == temp[3].get_y()):
+            print("found y face in common")
+            max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
+            max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
+
+            min_x = min(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
+            min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
+
+            for x in flattened:
+                if min_x <= x.get_x() <= max_x and min_z <= x.get_z() <= max_z and x.get_y() == temp[0].get_y():
+                    pointDict[k].append(x)
+
+        elif(temp[0].get_z() == temp[1].get_z() == temp[2].get_z() == temp[3].get_z()):
+            print("found z face in common")
+            max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
+            max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
+
+            min_x = min(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
+            min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
+
+
+            for x in flattened:
+                if min_x <= x.get_x() <= max_x and min_y <= x.get_y() <= max_y and x.get_z() == temp[0].get_z():
+                    pointDict[k].append(x)
+        
+
     # for key, val in faceDict.items():
     #     print(key, val)
+
+    print(len(flattened))
+
+    temp = []
 
     for key, val in faceDict.items():
         p0 = val[0].send_vals()
@@ -838,14 +887,24 @@ def scene(mesh, resolution, volume, isScene):
 
         norm = crossProduct(v2, v1)
 
-        print(norm)
-
         result = dotProduct(norm, pneg)
-
-
 
         if result > 0:
             print(key)
+
+            toKeep = pointDict[key]
+
+            for x in toKeep:
+                if x not in temp:
+                    temp.append(x)
+
+            
+
+    print(len(flattened), len(temp))  
+
+    flattened = temp 
+      
+
 
     #     if result < 0:
     #         maxX = max(value.get_x() for value in val)
