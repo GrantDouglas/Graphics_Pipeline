@@ -813,14 +813,7 @@ def scene(mesh, resolution, volume, isScene):
     matricies.append(matrix1)
     # matricies.append(matrix2)
     # matricies.append(matrix3)
-
-    flattened = [val for sublist in matricies for val in sublist]
-
-    translate(flattened, 500)
-    rotation(flattened, xangle, yangle, zangle)
-    translate(flattened, -500)
-
-    pointsToRemove = []
+    
 
     pointDict = {}
 
@@ -837,7 +830,7 @@ def scene(mesh, resolution, volume, isScene):
             min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
             min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
 
-            for x in flattened:
+            for x in matrix1:
                 if min_y <= x.get_y() <= max_y and min_z <= x.get_z() <= max_z and x.get_x() == temp[0].get_x():
                     pointDict[k].append(x)
 
@@ -849,7 +842,7 @@ def scene(mesh, resolution, volume, isScene):
             min_x = min(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
             min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
 
-            for x in flattened:
+            for x in matrix1:
                 if min_x <= x.get_x() <= max_x and min_z <= x.get_z() <= max_z and x.get_y() == temp[0].get_y():
                     pointDict[k].append(x)
 
@@ -862,10 +855,18 @@ def scene(mesh, resolution, volume, isScene):
             min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
 
 
-            for x in flattened:
+            for x in matrix1:
                 if min_x <= x.get_x() <= max_x and min_y <= x.get_y() <= max_y and x.get_z() == temp[0].get_z():
                     pointDict[k].append(x)
-        
+
+    flattened = [val for sublist in matricies for val in sublist]
+
+    translate(flattened, 500)
+    rotation(flattened, xangle, yangle, zangle)
+    translate(flattened, -500)
+
+    pointsToRemove = []
+
 
     # for key, val in faceDict.items():
     #     print(key, val)
@@ -895,15 +896,32 @@ def scene(mesh, resolution, volume, isScene):
             toKeep = pointDict[key]
 
 
-            # TODO: FIX THIS LOOP ITS WRONG
+            # TODO: FIX THIS LOOP ITS WRONG (maybe working now)
             for x in toKeep:
                 if x not in temp:
                     temp.append(x)
-            
+    
+    newDict = {}
 
-    print(len(flattened), len(temp))  
+    keys = set(temp).intersection(set(connectionsDict.keys()))
 
-    print(temp)
+    newDict = {k: connectionsDict[k] for k in keys}
+
+    for key, vals in newDict.items():
+        newVals = []
+        for k in vals:
+            if k in temp:
+                newVals.append(k)
+        newDict[key] = newVals
+
+
+    print(len(newDict.values()), len(connectionsDict.values()))
+
+    
+    connectionsDict = newDict
+
+
+
 
     flattened = temp 
 
