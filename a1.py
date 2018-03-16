@@ -521,6 +521,34 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         connections[coordSet[0]] = finalConnect
         connections[coordSet[1]] = newConnect
 
+        print(connections)
+
+        faceDict = {}
+        count = 6
+
+        for first, second in zip(newConnect, newConnect[1:]):
+            connections[first] = [coordSet[0], second]
+            connections[second] = [coordSet[0], first]
+            faceDict[count] = [coordSet[0], first, second]
+            count += 1
+
+        faceDict[count] = [coordSet[0], newConnect[-1], newConnect[0]]
+        count += 1
+
+        for first, second in zip(finalConnect, finalConnect[1:]):
+            connections[first] = [coordSet[1], second]
+            connections[second] = [coordSet[1], first]
+            faceDict[count] = [coordSet[1], first, second]
+            count += 1
+
+        faceDict[count] = [coordSet[1], finalConnect[-1], finalConnect[0]]
+        count += 1
+
+        print("\n\n")
+        print(connections)
+
+
+
         newMatrix = matrix
     else:
         print("not a valid mesh")
@@ -548,7 +576,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord + 200)
             k.set_z(k.zCoord + 200)
 
-    return connections, newMatrix
+    return connections, newMatrix, faceDict
 
 
 def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
@@ -574,8 +602,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
         [vol, -vol, vol],
         [-vol, -vol, vol]
         ]
-
-    print(points)
 
     if mesh == "tri":
         triangGrid, gap = grid(res, points, vol)
@@ -627,22 +653,12 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     count = 0
     faceDict = {}
 
-    faceDict[0] = [cubeList[0], cubeList[1] ,cubeList[2], cubeList[3]]
-    faceDict[1] = [cubeList[0], cubeList[1], cubeList[4], cubeList[5]]
-    faceDict[2] = [cubeList[0], cubeList[2], cubeList[4], cubeList[6]]
-    faceDict[3] = [cubeList[7], cubeList[5], cubeList[4], cubeList[6]]
-    faceDict[4] = [cubeList[7], cubeList[3], cubeList[1], cubeList[5]]
-    faceDict[5] = [cubeList[7], cubeList[3], cubeList[6], cubeList[2]]
-
-    # for key, val in faceDict.items():
-    #     print(key)
-    #     for k in val:
-    #         print(k.send_vals())
-
-    # cubeList = coordSet[::res]
-
-    # for k in cubeList:
-    #     print(k.send_vals())
+    faceDict[0] = [cubeList[0], cubeList[1], cubeList[3], cubeList[2]]
+    faceDict[1] = [cubeList[4], cubeList[5], cubeList[1], cubeList[0]]
+    faceDict[2] = [cubeList[4], cubeList[0], cubeList[2], cubeList[6]]
+    faceDict[3] = [cubeList[5], cubeList[4], cubeList[6], cubeList[7]]
+    faceDict[4] = [cubeList[1], cubeList[5], cubeList[7], cubeList[3]]
+    faceDict[5] = [cubeList[2], cubeList[3], cubeList[7], cubeList[6]]
 
     if isScene:
 
@@ -703,7 +719,7 @@ def grid(resolution, points, vol):
         if x[1][2] - x[0][2] != 0:
 
             gap = int((abs(x[0][2]) + abs(x[1][2])) / resolution)
-            print(gap)
+
             start = min(x[0][2], x[1][2])
             end = max(x[0][2], x[1][2])
 
@@ -713,7 +729,7 @@ def grid(resolution, points, vol):
         # place grid points on y axis lines if the x axis are equal
         elif x[1][0] - x[0][0] == 0:
             gap = int((abs(x[0][1]) + abs(x[1][1])) / resolution)
-            print(gap)
+
             start = min(x[0][1], x[1][1])
             end = max(x[0][1], x[1][1])
 
@@ -723,7 +739,7 @@ def grid(resolution, points, vol):
         # place grid points on x axis lines if the y axis are equal
         elif x[1][1] - x[0][1] == 0:
             gap = int((abs(x[0][0]) + abs(x[1][0])) / resolution)
-            print(gap)
+
             start = min(x[0][0], x[1][0])
             end = max(x[0][0], x[1][0])
 
@@ -783,47 +799,42 @@ def scene(mesh, resolution, volume, isScene):
     matricies = []
     connectionsDict = {}
 
-    connections, matrix1, faceDict = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
+    connections, matrix1, faceDict1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
 
     connectionsDict.update(connections)
 
-    
 
+    connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    removeWrapping(matrix2)
 
-    # name = "cube.png"
-    # image1, matrix1 = imaging(matrix, connections, name)
+    connectionsDict.update(connections)
 
-    # connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    # removeWrapping(matrix2)
+    connections, matrix3, faceDict2 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    removeWrapping(matrix3)
 
-    # connectionsDict.update(connections)
+    tempDict = connections
 
-    # # name = "cylinder.png"
-    # # image2, matrix2 = imaging(matrix, connections, name)
+    connectionsDict.update(connections)
 
-    # connections, matrix3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    # removeWrapping(matrix3)
+    faceDict = {}
 
-    # connectionsDict.update(connections)
+    faceDict.update(faceDict2)
+    faceDict.update(faceDict1)
 
-    # name = "cone.png"
-    # image3, matrix3 = imaging(matrix, connections, name)
 
     matricies.append(matrix1)
-    # matricies.append(matrix2)
-    # matricies.append(matrix3)
-    
+    matricies.append(matrix2)
+    matricies.append(matrix3)
 
     pointDict = {}
 
-    for k in range(0,6):
+    for k in range(0, 6):
         temp = faceDict[k]
         pointDict[k] = []
-        print(temp)
 
         if(temp[0].get_x() == temp[1].get_x() == temp[2].get_x() == temp[3].get_x()):
-            print("found x face in common")
+
             max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
             max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
 
@@ -835,7 +846,7 @@ def scene(mesh, resolution, volume, isScene):
                     pointDict[k].append(x)
 
         elif(temp[0].get_y() == temp[1].get_y() == temp[2].get_y() == temp[3].get_y()):
-            print("found y face in common")
+
             max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
             max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
 
@@ -847,7 +858,7 @@ def scene(mesh, resolution, volume, isScene):
                     pointDict[k].append(x)
 
         elif(temp[0].get_z() == temp[1].get_z() == temp[2].get_z() == temp[3].get_z()):
-            print("found z face in common")
+
             max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
             max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
 
@@ -858,6 +869,12 @@ def scene(mesh, resolution, volume, isScene):
             for x in matrix1:
                 if min_x <= x.get_x() <= max_x and min_y <= x.get_y() <= max_y and x.get_z() == temp[0].get_z():
                     pointDict[k].append(x)
+
+    for k in range(6, resolution*2+6):
+        pointDict[k] = []
+        for key, v in faceDict2.items():
+            for val in v:
+                pointDict[k].append(val)
 
     flattened = [val for sublist in matricies for val in sublist]
 
@@ -871,59 +888,76 @@ def scene(mesh, resolution, volume, isScene):
     # for key, val in faceDict.items():
     #     print(key, val)
 
-    print(len(flattened))
+    temp = []
+
+    # for key, val in faceDict.items():
+    #     p0 = val[0].send_vals()
+    #     p3 = val[3].send_vals()
+    #     p2 = val[2].send_vals()
+
+
+    #     pneg = [p0[0] - 500, p0[1] - 500, p0[2] - 800]
+
+    #     v1 = vectorSub(p3, p0)
+    #     v2 = vectorSub(p2, p0)
+
+    #     norm = crossProduct(v2, v1)
+
+    #     result = dotProduct(norm, pneg)
+
+    #     if result < 0:
+    #         print(key)
+
+    #         toKeep = pointDict[key]
+
+
+    #         # TODO: FIX THIS LOOP ITS WRONG (maybe working now)
+    #         for x in toKeep:
+    #             if x not in temp:
+    #                 temp.append(x)
 
     temp = []
 
-    for key, val in faceDict.items():
-        p0 = val[0].send_vals()
-        p3 = val[3].send_vals()
-        p2 = val[2].send_vals()
+    print(pointDict)
+
+    for k, v in faceDict.items():
+
+        edge1 = (v[1].get_x() - v[0].get_x()) * (v[1].get_y() + v[0].get_y())
+        edge2 = (v[2].get_x() - v[1].get_x()) * (v[2].get_y() + v[1].get_y())
+        edge3 = (v[0].get_x() - v[2].get_x()) * (v[0].get_y() + v[2].get_y())
+        # edge4 = (v[0].get_x() - v[3].get_x()) * (v[0].get_y() + v[3].get_y())
+
+        result = edge1 + edge2 + edge3
 
 
-        pneg = [p0[0] - 500, p0[1] - 500, p0[2] - 800]
+        if result < 0:
 
-        v1 = vectorSub(p3, p0)
-        v2 = vectorSub(p2, p0)
+            for vals in pointDict[k]:
+                temp.append(vals)
 
-        norm = crossProduct(v2, v1)
+    for val in temp:
+        if val not in tempDict.keys():
 
-        result = dotProduct(norm, pneg)
-
-        if result > 0:
-            print(key)
-
-            toKeep = pointDict[key]
-
-
-            # TODO: FIX THIS LOOP ITS WRONG (maybe working now)
-            for x in toKeep:
-                if x not in temp:
-                    temp.append(x)
-    
-    newDict = {}
-
-    keys = set(temp).intersection(set(connectionsDict.keys()))
-
-    newDict = {k: connectionsDict[k] for k in keys}
-
-    for key, vals in newDict.items():
-        newVals = []
-        for k in vals:
-            if k in temp:
-                newVals.append(k)
-        newDict[key] = newVals
-
-
-    print(len(newDict.values()), len(connectionsDict.values()))
-
-    
-    connectionsDict = newDict
+            connectionsDict.pop(val, None)
 
 
 
 
-    flattened = temp 
+    # newDict = {}
+
+    # keys = set(temp).intersection(set(connectionsDict.keys()))
+
+    # newDict = {k: connectionsDict[k] for k in keys}
+
+    # for key, vals in newDict.items():
+    #     newVals = []
+    #     for k in vals:
+    #         if k in temp:
+    #             newVals.append(k)
+    #     newDict[key] = newVals
+
+
+    # print(len(newDict.values()), len(connectionsDict.values()))
 
 
 
