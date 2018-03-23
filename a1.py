@@ -269,127 +269,6 @@ def vector(point1, point2):
     return vec
 
 
-def circleCoords(startX, startY, radius, axis, res, vol):
-    """Creates a circle
-
-    This function will create a circle using the Midpoint Circle Algorithm
-
-    Arguments:
-        startX {int} -- The starting x position of the circle
-        startY {int} -- The starting y position of the circle
-        radius {int} -- The radius of the circle
-
-    Returns:
-        List -- A list of coordinates which create a circle
-    """
-
-    angleList = []
-
-    if axis == 'x':
-        x = radius - 1
-        y = 0
-
-        delta_x = 1
-        delta_y = 1
-
-        error = delta_x - (radius * 2)
-
-        points = []
-        points.append([vol, 0, -vol])
-
-        # plot all points until it hits the y axis
-        while x >= y:
-            points.append([startX + x, startY + y, -vol])
-            points.append([startX + y, startY + x, -vol])
-            points.append([startX + y, startY - x, -vol])
-            points.append([startX + x, startY - y, -vol])
-            points.append([startX - y, startY + x, -vol])
-            points.append([startX - x, startY + y, -vol])
-            points.append([startX - x, startY - y, -vol])
-            points.append([startX - y, startY - x, -vol])
-
-            # move the y coordinate up if it did not go far enough. otherwise move back an x coordinate
-            if error <= 0:
-                y += 1
-                error += delta_y
-                delta_y += 2
-            else:
-                x -= 1
-                delta_x += 2
-                error += delta_x - (radius * 2)
-    elif axis == 'z':
-        x = radius - 1
-        z = 0
-
-        delta_x = 1
-        delta_z = 1
-
-        error = delta_x - (radius * 2)
-
-        points = []
-        points.append([vol, vol, -vol])
-        points.append([vol, 0, -vol])
-
-        # plot all points until it hits the y axis
-        while x >= z:
-            points.append([startX + x, 0, startY + z])
-            points.append([startX + z, 0, startY + x])
-
-            points.append([startX + z, 0, startY - x])
-            points.append([startX + x, 0, startY - z])
-            points.append([startX - z, 0, startY + x])
-            points.append([startX - x, 0, startY + z])
-            points.append([startX - x, 0, startY - z])
-            points.append([startX - z, 0, startY - x])
-
-            # move the y coordinate up if it did not go far enough. otherwise move back an x coordinate
-            if error <= 0:
-                z += 1
-                error += delta_z
-                delta_z += 2
-            else:
-                x -= 1
-                delta_x += 2
-                error += delta_x - (radius * 2)
-
-    finalPoints = points
-    return finalPoints, angleList
-
-
-def connectCircle(res, key, axis, points, volume):
-    """Divides a circle into even portions
-
-    This function will divide a circle into portions based on the resolution value
-
-    Arguments:
-        resolution {int} -- The triangle resolution specified by the user
-        key {coord} -- The centre point of the circle
-
-    Returns:
-        list of coords -- A list of coord objects which make up the circle division
-    """
-    r = volume - 1
-    angle = 0
-    connectList = []
-    finalConnect = []
-
-    for i in range(0, res):
-
-        # create an angle between 0 and 2pi that is split evenly by the resolution number
-        angle = i * (6.28 / res)
-
-        # calculate new x and y coordinates that meet the angle specified.
-        if axis == 'x':
-            x = int(key.get_x() + r * math.cos(angle))
-            y = int(key.get_y() + r * math.sin(angle))
-            connectList.append(coords(x, y, -volume))
-        elif axis == 'z':
-            x = int(key.get_x() + r * math.cos(angle))
-            z = int(key.get_z() + r * math.sin(angle))
-            connectList.append(coords(x, 0, z))
-    return connectList
-
-
 def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     """Creates a cylinder
     This function will create a cylinder
@@ -404,14 +283,20 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     """
 
     points = []
+    connections = {}
+    faceDict = {}
+    test = []
+    finalConnect = []
 
+    # define midpoints of the circles
     points.append(coords(0, vol, -vol))
     points.append(coords(0, 0, 0))
 
+    # create circles that define the cylinder
     testList = newCirc(resolution, 'z', vol)
-
     tempList = copy.deepcopy(testList)
 
+    # adjust the second circle to be further out
     for k in tempList:
         k.set_y(k.get_y() + vol)
         k.set_z(k.get_z() - vol)
@@ -419,38 +304,28 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     newList = points + testList + tempList
 
+    # create a list of points which define each circle
     connList1 = points + testList
     connList2 = points + tempList
 
-    print(len(newList))
-
-
-    coordSet = [x for x in testList]
-
-    connections = {}
-    faceDict = {}
     
-
-    test = []
-
-    finalConnect = []
 
     if mesh == "tri":
 
-       # USE TWO CIRCLE LISTS TO CONNECT INDIV CIRCLES, THEN MATCH EDGES BASED ON INDEX
-
+       # connect all points in first circle of cylinder 
         for first, second in zip(connList1[2:], connList1[3:]):
             connections[first] = [connList1[1], second]
             connections[second] = [connList1[1], first]
-
         connections[connList1[-1]] = [connList1[2], connList1[1]]
 
+        # connect all points in second circle of cylinder
         for first, second in zip(connList2[2:], connList2[3:]):
             connections[first] = [connList2[0], second]
             connections[second] = [connList2[0], first]
 
         connections[connList2[-1]] = [connList2[2], connList2[0]]
 
+        # connect all points in both circles to each other based on index
         for k in range(2, len(connList1)):
             connections[connList1[k]].append(connList2[k])
 
@@ -524,29 +399,25 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     """
     
     points = []
+    connections = {}
+    faceDict = {}
+    test = []
+    finalConnect = []
+
+    # define midpoint of circle, and the tip of the cone
 
     points.append(coords(0, vol, -vol))
     points.append(coords(0, 0, 0))
 
+    # create the circle
     testList = newCirc(res, 'z', vol)
-
     newList = points + testList
 
-    print(len(newList))
-
-
-    coordSet = [x for x in testList]
-
-    connections = {}
-    faceDict = {}
     
-
-    test = []
-
-    finalConnect = []
 
     if mesh == "tri":
 
+        # connect all points in circle and point to each other
         for first, second in zip(newList[2:], newList[3:]):
             connections[first] = [newList[0], newList[1], second]
             connections[second] = [newList[0], newList[1], first]
