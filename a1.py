@@ -402,56 +402,54 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         List -- A dictionary where each key is a coord object, and it maps to a list of coord objects
         List -- A matrix which contains coord objects for each point of the cylinder
     """
-    points, angles = circleCoords(vol, 0, vol, 'x', resolution, vol)
-    finalPoints = []
-    matrix = []
+
+    points = []
+
+    points.append(coords(0, vol, -vol))
+    points.append(coords(0, 0, 0))
+
+    testList = newCirc(resolution, 'z', vol)
+
+    tempList = copy.deepcopy(testList)
+
+    for k in tempList:
+        k.set_y(k.get_y() + vol)
+        k.set_z(k.get_z() - vol)
+
+
+    newList = points + testList + tempList
+
+    print(len(newList))
+
+
+    coordSet = [x for x in testList]
+
     connections = {}
-    for x in points:
-        if x not in finalPoints:
-            finalPoints.append(x)
-
-    coordList = [coords(x[0], x[1], x[2]) for x in finalPoints]
-
-    for k in coordList:
-        k.set_x(k.xCoord)
-        k.set_y(k.yCoord)
-        k.set_z(k.zCoord)
-        matrix.append(k)
-
-    coordSet = [x for x in matrix]
+    faceDict = {}
+    
 
     test = []
 
+    finalConnect = []
+
     if mesh == "tri":
-        test = connectCircle(resolution, coordSet[0], 'x', matrix, vol)
-        connections[coordSet[0]] = test
-    elif mesh == "poly":
-        connections = {}
+        
+        for first, second in zip(newList[2:], newList[3:]):
+            connections[first] = [newList[0], newList[1], second]
+            connections[second] = [newList[0], newList[1], first]
+
+        connections[newList[-1]] = [newList[0], newList[2], newList[1]]
+
+
+        
+
+        
+
+        newMatrix = newList
     else:
         print("not a valid mesh")
         sys.exit(1)
-
-    newMatrix = matrix + test
-
-    secondCircle = copy.deepcopy(newMatrix)
-    secondTest = copy.deepcopy(test)
-
-    for k in secondCircle:
-        k.set_z(k.zCoord + vol*1.5)
-
-    for k in secondTest:
-        k.set_z(k.zCoord + vol*1.5)
-
-    connections[secondCircle[0]] = secondTest
-
-    for k in range(0, len(secondTest)):
-        testing = []
-        testing.append(secondTest[k])
-        connections[test[k]] = testing
-
-    secondMatrix = secondCircle + secondTest
-
-    newMatrix.extend(secondMatrix)
+    
 
     if isScene:
 
@@ -479,6 +477,33 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     return connections, newMatrix
 
 
+def newCirc(res, axis, vol):
+
+
+    r = volume - 1
+    angle = 0
+    connectList = []
+    finalConnect = []
+
+    for i in range(0, res):
+
+        # create an angle between 0 and 2pi that is split evenly by the resolution number
+        angle = i * (6.28 / res)
+
+        # calculate new x and y coordinates that meet the angle specified.
+        if axis == 'x':
+            x = r * math.cos(angle)
+            y = r * math.sin(angle)
+            connectList.append(coords(x, y, -volume))
+        elif axis == 'z':
+            x = r * math.cos(angle)
+            z = r * math.sin(angle)
+            connectList.append(coords(x, 0, z))
+    return connectList
+
+
+
+
 def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     """Creates a cone
 
@@ -488,68 +513,38 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         res {[type]} -- The number of triangles to create
         mesh {[type]} -- the type of mesh to create.
     """
-    points, angles = circleCoords(vol, -vol, vol, 'z', res, vol)
-    finalPoints = []
-    matrix = []
+    
+    points = []
+
+    points.append(coords(0, vol, -vol))
+    points.append(coords(0, 0, 0))
+
+    testList = newCirc(res, 'z', vol)
+
+    newList = points + testList
+
+    print(len(newList))
+
+
+    coordSet = [x for x in testList]
+
     connections = {}
-    for x in points:
-        if x not in finalPoints:
-            finalPoints.append(x)
-
-    coordList = [coords(x[0], x[1], x[2]) for x in finalPoints]
-
-    for k in coordList:
-        k.set_x(k.xCoord)
-        k.set_y(k.yCoord)
-        k.set_z(k.zCoord)
-        matrix.append(k)
-
-    coordSet = [x for x in matrix]
+    faceDict = {}
+    
 
     test = []
 
     finalConnect = []
 
     if mesh == "tri":
-        test = connectCircle(res, coordSet[0], 'z', matrix, volume)
-        for k in test:
-            nearest = min(matrix, key=lambda x: (math.sqrt((k.get_x() - x.get_x())**2 + (k.get_y() - x.get_y())**2 + (k.get_z() - x.get_z())**2)))
-            finalConnect.append(nearest)
 
-        newConnect = finalConnect
+        for first, second in zip(newList[2:], newList[3:]):
+            connections[first] = [newList[0], newList[1], second]
+            connections[second] = [newList[0], newList[1], first]
 
-        connections[coordSet[0]] = finalConnect
-        connections[coordSet[1]] = newConnect
+        connections[newList[-1]] = [newList[0], newList[2], newList[1]]
 
-        print(connections)
-
-        faceDict = {}
-        count = 6
-
-        for first, second in zip(newConnect, newConnect[1:]):
-            connections[first] = [coordSet[0], second]
-            connections[second] = [coordSet[0], first]
-            faceDict[count] = [coordSet[0], first, second]
-            count += 1
-
-        faceDict[count] = [coordSet[0], newConnect[-1], newConnect[0]]
-        count += 1
-
-        for first, second in zip(finalConnect, finalConnect[1:]):
-            connections[first] = [coordSet[1], second]
-            connections[second] = [coordSet[1], first]
-            faceDict[count] = [coordSet[1], first, second]
-            count += 1
-
-        faceDict[count] = [coordSet[1], finalConnect[-1], finalConnect[0]]
-        count += 1
-
-        print("\n\n")
-        print(connections)
-
-
-
-        newMatrix = matrix
+        newMatrix = newList
     else:
         print("not a valid mesh")
         sys.exit(1)
@@ -918,7 +913,7 @@ def scene(mesh, resolution, volume, isScene):
 
     temp = []
 
-    print(pointDict)
+
 
     for k, v in faceDict.items():
 
