@@ -419,6 +419,9 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     newList = points + testList + tempList
 
+    connList1 = points + testList
+    connList2 = points + tempList
+
     print(len(newList))
 
 
@@ -436,14 +439,20 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
        # USE TWO CIRCLE LISTS TO CONNECT INDIV CIRCLES, THEN MATCH EDGES BASED ON INDEX
 
-        
+        for first, second in zip(connList1[2:], connList1[3:]):
+            connections[first] = [connList1[1], second]
+            connections[second] = [connList1[1], first]
 
-        print(connections)
+        connections[connList1[-1]] = [connList1[2], connList1[1]]
 
+        for first, second in zip(connList2[2:], connList2[3:]):
+            connections[first] = [connList2[0], second]
+            connections[second] = [connList2[0], first]
 
-        
+        connections[connList2[-1]] = [connList2[2], connList2[0]]
 
-        
+        for k in range(2, len(connList1)):
+            connections[connList1[k]].append(connList2[k])
 
         newMatrix = newList
     else:
