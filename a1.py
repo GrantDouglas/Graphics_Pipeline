@@ -433,12 +433,12 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     finalConnect = []
 
     if mesh == "tri":
-        
-        for first, second in zip(newList[2:], newList[3:]):
-            connections[first] = [newList[0], newList[1], second]
-            connections[second] = [newList[0], newList[1], first]
 
-        connections[newList[-1]] = [newList[0], newList[2], newList[1]]
+       # USE TWO CIRCLE LISTS TO CONNECT INDIV CIRCLES, THEN MATCH EDGES BASED ON INDEX
+
+        
+
+        print(connections)
 
 
         
