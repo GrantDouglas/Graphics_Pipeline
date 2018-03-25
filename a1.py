@@ -308,7 +308,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     connList1 = points + testList
     connList2 = points + tempList
 
-    
 
     if mesh == "tri":
 
@@ -336,7 +335,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     
 
     if isScene:
-
         for k in newMatrix:
             k.set_x(k.xCoord + 250 + (vol/4))
             k.set_y(k.yCoord + 225 + (vol/4))
@@ -351,7 +349,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         yTransform(newMatrix, angle)
 
         angle = float(input("What angle (in radians) do you wish to rotate the cylinder on the z axis by?"))
-        yTransform(newMatrix, angle)
+        zTransform(newMatrix, angle)
 
         for k in newMatrix:
             k.set_x(k.xCoord+300)
@@ -444,7 +442,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         yTransform(newMatrix, angle)
 
         angle = float(input("What angle (in radians) do you wish to rotate the cone on the z axis by?"))
-        yTransform(newMatrix, angle)
+        zTransform(newMatrix, angle)
 
         for k in newMatrix:
             k.set_x(k.xCoord + 200)
@@ -477,7 +475,14 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
         [vol, -vol, vol],
         [-vol, -vol, vol]
         ]
-
+    cubeList = []
+    faceDict = {}
+    finalPoints = []
+    matrix = []
+    connections = {}
+    count = 0
+   
+    # create mesh based on connections
     if mesh == "tri":
         triangGrid, gap = grid(res, points, vol)
         newPoints = triangGrid + points
@@ -486,10 +491,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     else:
         print("not a valid mesh")
         sys.exit(1)
-
-    finalPoints = []
-    matrix = []
-    connections = {}
 
     # create a list of unique points
     for x in newPoints:
@@ -512,10 +513,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     for key in coordSet:
         connections[key] = connect(coordList, key, gap, resolution)
 
-
-    cubeList = []
-
-
     for k in points:
         temp = 0
         for j in coordSet:
@@ -525,9 +522,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
         if stuff == True:
             cubeList.append(temp)
 
-    count = 0
-    faceDict = {}
-
+    # all faces that make up the cube, given corner points
     faceDict[0] = [cubeList[0], cubeList[1], cubeList[3], cubeList[2]]
     faceDict[1] = [cubeList[4], cubeList[5], cubeList[1], cubeList[0]]
     faceDict[2] = [cubeList[4], cubeList[0], cubeList[2], cubeList[6]]
@@ -536,7 +531,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     faceDict[5] = [cubeList[2], cubeList[3], cubeList[7], cubeList[6]]
 
     if isScene:
-
         for k in coordList:
             k.set_x(k.xCoord + 400)
             k.set_y(k.yCoord + 500)
@@ -623,12 +617,24 @@ def grid(resolution, points, vol):
 
     return newFinal, gap
 
-def dist(p1, p2):
-    return (p1.get_x() - p2.get_x())**2 + (p1.get_y() - p2.get_y())**2
+
+def normalized(vector):
+    mag = math.sqrt((vector[0])**2 + (vector[1])**2 + (vector[2])**2)
+    x = vector[0] / mag
+    y = vector[1] / mag
+    z = vector[2] / mag
+
+    normVector = [x, y, z]
+    return normVector
 
 
-def square(p1, p2, p3, p4):
-    print(dist(p1, p2))
+def viewTransform(pointMatrix):
+    zAxis = normalized(vectorSub([500,500,800], [500,500,0]))
+    xAxis = normalized(crossProduct([0,1,0], zAxis))
+    yAxis = crossProduct(xAxis, zAxis)
+
+    print(yAxis)
+
 
 
 def scene(mesh, resolution, volume, isScene):
@@ -701,6 +707,9 @@ def scene(mesh, resolution, volume, isScene):
     matricies.append(matrix1)
     matricies.append(matrix2)
     matricies.append(matrix3)
+
+
+    viewTransform(matricies)
 
     pointDict = {}
 
