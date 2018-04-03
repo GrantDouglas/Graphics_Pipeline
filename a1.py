@@ -62,6 +62,9 @@ class polygon:
         self.point2 = p2
         self.point3 = p3
 
+    def values(self):
+        return [self.point1.send_vals(), self.point2.send_vals(), self.point3.send_vals()]
+
 
 class squarePoly:
 
@@ -672,18 +675,14 @@ def newGrid(res, points, vol, squares):
             
             for list1, list2 in zip(lists, lists[1:]):                
                 
-                for l in range(1, res):
+                for l in range(0, res):
                     polyList.append(polygon(list1[l-1], list1[l], list2[l]))
                     polyList.append(polygon(list1[l-1], list2[l-1], list2[l]))
 
-            list1 = lists[8]
-            list2 = lists[9]
-
-            for l in list1:
-                print(l.send_vals())
-
-            for l in list2:
-                print(l.send_vals())
+                    if l == 1:
+                        for n in polyList:
+                            print(n.values())
+                print(len(polyList))
 
 
 
