@@ -55,6 +55,23 @@ class coords:
     def get_z(self):
         return self.zCoord
 
+class polygon:
+
+    def __init__(self, p1, p2, p3):
+        self.point1 = p1
+        self.point2 = p2
+        self.point3 = p3
+
+
+class squarePoly:
+
+    def __init__(self, p1, p2, p3, p4):
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+        self.p4 = p4
+
+
 
 def xTransform(points, angle):
     """Transform points in the x axis
@@ -287,6 +304,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     faceDict = {}
     test = []
     finalConnect = []
+    polyList = []
 
     # define midpoints of the circles
     points.append(coords(0, vol, -vol))
@@ -315,18 +333,40 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         for first, second in zip(connList1[2:], connList1[3:]):
             connections[first] = [connList1[1], second]
             connections[second] = [connList1[1], first]
+
+            polyList.append(polygon(connList1[1], first, second))
+
+
         connections[connList1[-1]] = [connList1[2], connList1[1]]
+
+        polyList.append(polygon(connList1[1], connList1[-1], connList1[2]))
 
         # connect all points in second circle of cylinder
         for first, second in zip(connList2[2:], connList2[3:]):
             connections[first] = [connList2[0], second]
             connections[second] = [connList2[0], first]
 
+            polyList.append(polygon(connList2[0], first, second))
+
         connections[connList2[-1]] = [connList2[2], connList2[0]]
+
+        polyList.append(polygon(connList2[0], connList2[-1], connList2[2]))
+
+        # print(len(polyList))
 
         # connect all points in both circles to each other based on index
         for k in range(2, len(connList1)):
+            num = k + 1
+            if num >= len(connList1):
+                num = 2
+
+            print(len(connList1), num)
+
+            polyList.append(polygon(connList1[k], connList1[num], connList2[num]))
+            polyList.append(polygon(connList1[k], connList2[k], connList2[num]))
             connections[connList1[k]].append(connList2[k])
+
+        print(len(polyList))
 
         newMatrix = newList
     else:
@@ -401,6 +441,8 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     faceDict = {}
     test = []
     finalConnect = []
+    polyList = []
+    count = 0
 
     # define midpoint of circle, and the tip of the cone
 
@@ -412,7 +454,6 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     newList = points + testList
 
     
-
     if mesh == "tri":
 
         # connect all points in circle and point to each other
@@ -420,12 +461,27 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             connections[first] = [newList[0], newList[1], second]
             connections[second] = [newList[0], newList[1], first]
 
+            # testing polygon
+            polyList.append(polygon(newList[0], first, second))
+            polyList.append(polygon(newList[1], first, second))
+                 
+
         connections[newList[-1]] = [newList[0], newList[2], newList[1]]
+
+
+        # testing polygon
+        polyList.append(polygon(newList[0], newList[-1], newList[2]))
+        polyList.append(polygon(newList[1], newList[-1], newList[2]))
 
         newMatrix = newList
     else:
         print("not a valid mesh")
         sys.exit(1)
+
+
+    # for k in polyList:
+    #     print(k.point1.send_vals(), k.point2.send_vals(), k.point3.send_vals())
+
 
     if isScene:
 
@@ -481,6 +537,17 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     matrix = []
     connections = {}
     count = 0
+
+    polyList = []
+
+    polyList.append(squarePoly(points[0], points[1], points[3], points[2]))
+    polyList.append(squarePoly(points[4], points[5], points[1], points[0]))
+    polyList.append(squarePoly(points[4], points[0], points[2], points[6]))
+    polyList.append(squarePoly(points[5], points[4], points[6], points[7]))
+    polyList.append(squarePoly(points[1], points[5], points[7], points[3]))
+    polyList.append(squarePoly(points[2], points[3], points[7], points[6]))
+
+    test = newGrid(res, points, vol, polyList)
    
     # create mesh based on connections
     if mesh == "tri":
@@ -558,6 +625,87 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     return connections, matrix, faceDict
 
 
+def newGrid(res, points, vol, squares):
+
+    polyList = []
+
+    # print(squares)
+
+    for k in squares:
+        p1 = k.p1
+        p2 = k.p2
+        p3 = k.p3
+        p4 = k.p4
+
+        lists = []
+        
+
+        if p1[0] == p2[0] == p3[0] == p4[0]:
+            gap = int((max(p1[1], p2[1], p3[1], p4[1]) - min(p1[1], p2[1], p3[1], p4[1])) / res)
+            start = min(p1[1], p2[1], p3[1], p4[1])
+            end = max(p1[1], p2[1], p3[1], p4[1])
+            print("on x axis", gap)
+
+
+        elif p1[1] == p2[1] == p3[1] == p4[1]:
+            gap = int((max(p1[2], p2[2], p3[2], p4[2]) - min(p1[2], p2[2], p3[2], p4[2])) / res)
+            start = min(p1[2], p2[2], p3[2], p4[2])
+            end = max(p1[2], p2[2], p3[2], p4[2])
+            print("on y axis", gap)
+
+        elif p1[2] == p2[2] == p3[2] == p4[2]:
+            gap = int((max(p1[0], p2[0], p3[0], p4[0]) - min(p1[0], p2[0], p3[0], p4[0])) / res)
+
+            start = min(p1[0], p2[0], p3[0], p4[0])
+            end = max(p1[0], p2[0], p3[0], p4[0])
+            print("on z axis", gap)
+
+            for l in range(start, end, gap):
+                sampleList = []
+                for m in range(start, end, gap):
+                    
+                    sample = coords(l, m, p1[2])
+                    sampleList.append(sample)
+                    
+                lists.append(sampleList)
+                
+            
+            for list1, list2 in zip(lists, lists[1:]):                
+                
+                for l in range(1, res):
+                    polyList.append(polygon(list1[l-1], list1[l], list2[l]))
+                    polyList.append(polygon(list1[l-1], list2[l-1], list2[l]))
+
+            list1 = lists[8]
+            list2 = lists[9]
+
+            for l in list1:
+                print(l.send_vals())
+
+            for l in list2:
+                print(l.send_vals())
+
+
+
+        print(len(polyList))
+
+                
+
+
+
+
+    # check cube poly for the points
+    # check which axis the points are on
+    # for each column
+    # draw the row
+    # store each row
+    # 
+    # for each row in the row list
+    # compare curr list with next list
+
+    return polyList
+
+
 def grid(resolution, points, vol):
     """Create a grid on a square surface
 
@@ -615,7 +763,21 @@ def grid(resolution, points, vol):
             for k in range(start, end, gap):
                 newFinal.append([k, x[0][1], x[0][2]])
 
+    print(len(newFinal))
+
     return newFinal, gap
+
+
+def matrixVectorMultiply(vector, matrix):
+
+    x = matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2] + matrix[0][3] * vector[3]
+    y = matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2] + matrix[1][3] * vector[3]
+    z = matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2] + matrix[2][3] * vector[3]
+    f = matrix[3][0] * vector[0] + matrix[3][1] * vector[1] + matrix[3][2] * vector[2] + matrix[3][3] * vector[3]
+
+    result = [x, y, z, f]
+
+    return result
 
 
 def normalized(vector):
@@ -632,6 +794,8 @@ def viewTransform(pointMatrix):
     zAxis = normalized(vectorSub([500,500,800], [500,500,0]))
     xAxis = normalized(crossProduct([0,1,0], zAxis))
     yAxis = crossProduct(xAxis, zAxis)
+
+    
 
     print(yAxis)
 
