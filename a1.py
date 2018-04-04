@@ -332,7 +332,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     if mesh == "tri":
 
-       # connect all points in first circle of cylinder 
+       # connect all points in first circle of cylinder
         for first, second in zip(connList1[2:], connList1[3:]):
             connections[first] = [connList1[1], second]
             connections[second] = [connList1[1], first]
@@ -375,7 +375,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     else:
         print("not a valid mesh")
         sys.exit(1)
-    
+
 
     if isScene:
         for k in newMatrix:
@@ -438,7 +438,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         res {[type]} -- The number of triangles to create
         mesh {[type]} -- the type of mesh to create.
     """
-    
+
     points = []
     connections = {}
     faceDict = {}
@@ -456,7 +456,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     testList = newCirc(res, 'z', vol)
     newList = points + testList
 
-    
+
     if mesh == "tri":
 
         # connect all points in circle and point to each other
@@ -467,7 +467,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             # testing polygon
             polyList.append(polygon(newList[0], first, second))
             polyList.append(polygon(newList[1], first, second))
-                 
+
 
         connections[newList[-1]] = [newList[0], newList[2], newList[1]]
 
@@ -551,7 +551,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     polyList.append(squarePoly(points[2], points[3], points[7], points[6]))
 
     test = newGrid(res, points, vol, polyList)
-   
+
     # create mesh based on connections
     if mesh == "tri":
         triangGrid, gap = grid(res, points, vol)
@@ -641,13 +641,31 @@ def newGrid(res, points, vol, squares):
         p4 = k.p4
 
         lists = []
-        
+
 
         if p1[0] == p2[0] == p3[0] == p4[0]:
             gap = int((max(p1[1], p2[1], p3[1], p4[1]) - min(p1[1], p2[1], p3[1], p4[1])) / res)
             start = min(p1[1], p2[1], p3[1], p4[1])
             end = max(p1[1], p2[1], p3[1], p4[1])
             print("on x axis", gap)
+
+            for l in range(start, end+1, gap):
+                sampleList = []
+                for m in range(start, end+1, gap):
+
+                    sample = coords(p1[0], m, l)
+                    sampleList.append(sample)
+
+                lists.append(sampleList)
+
+            for l in range(1, res+1):
+                list1 = lists[l-1]
+                list2 = lists[l]
+
+                for m in range(1, res+1):
+
+                    polyList.append(polygon(list1[m-1], list1[m], list2[m]))
+                    polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
 
 
         elif p1[1] == p2[1] == p3[1] == p4[1]:
@@ -656,6 +674,24 @@ def newGrid(res, points, vol, squares):
             end = max(p1[2], p2[2], p3[2], p4[2])
             print("on y axis", gap)
 
+            for l in range(start, end+1, gap):
+                sampleList = []
+                for m in range(start, end+1, gap):
+
+                    sample = coords(m, p1[1], l)
+                    sampleList.append(sample)
+
+                lists.append(sampleList)
+
+            for l in range(1, res+1):
+                list1 = lists[l-1]
+                list2 = lists[l]
+
+                for m in range(1, res+1):
+
+                    polyList.append(polygon(list1[m-1], list1[m], list2[m]))
+                    polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
+
         elif p1[2] == p2[2] == p3[2] == p4[2]:
             gap = int((max(p1[0], p2[0], p3[0], p4[0]) - min(p1[0], p2[0], p3[0], p4[0])) / res)
 
@@ -663,32 +699,29 @@ def newGrid(res, points, vol, squares):
             end = max(p1[0], p2[0], p3[0], p4[0])
             print("on z axis", gap)
 
-            for l in range(start, end, gap):
+            # grid triangulation on z axis faces
+            for l in range(start, end+1, gap):
                 sampleList = []
-                for m in range(start, end, gap):
-                    
-                    sample = coords(l, m, p1[2])
+                for m in range(start, end+1, gap):
+
+                    sample = coords(m, l, p1[2])
                     sampleList.append(sample)
-                    
+
                 lists.append(sampleList)
-                
-            
-            for list1, list2 in zip(lists, lists[1:]):                
-                
-                for l in range(0, res):
-                    polyList.append(polygon(list1[l-1], list1[l], list2[l]))
-                    polyList.append(polygon(list1[l-1], list2[l-1], list2[l]))
 
-                    if l == 1:
-                        for n in polyList:
-                            print(n.values())
-                print(len(polyList))
+            for l in range(1, res+1):
+                list1 = lists[l-1]
+                list2 = lists[l]
 
+                for m in range(1, res+1):
 
+                    polyList.append(polygon(list1[m-1], list1[m], list2[m]))
+                    polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
 
         print(len(polyList))
 
-                
+
+
 
 
 
@@ -698,7 +731,7 @@ def newGrid(res, points, vol, squares):
     # for each column
     # draw the row
     # store each row
-    # 
+    #
     # for each row in the row list
     # compare curr list with next list
 
@@ -794,7 +827,7 @@ def viewTransform(pointMatrix):
     xAxis = normalized(crossProduct([0,1,0], zAxis))
     yAxis = crossProduct(xAxis, zAxis)
 
-    
+
 
     print(yAxis)
 
