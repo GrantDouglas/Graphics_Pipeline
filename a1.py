@@ -63,7 +63,7 @@ class polygon:
         self.point3 = p3
 
     def values(self):
-        return [self.point1.send_vals(), self.point2.send_vals(), self.point3.send_vals()]
+        return [self.point1, self.point2, self.point3]
 
 
 class squarePoly:
@@ -355,21 +355,15 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
         polyList.append(polygon(connList2[0], connList2[-1], connList2[2]))
 
-        # print(len(polyList))
-
         # connect all points in both circles to each other based on index
         for k in range(2, len(connList1)):
             num = k + 1
             if num >= len(connList1):
                 num = 2
 
-            print(len(connList1), num)
-
             polyList.append(polygon(connList1[k], connList1[num], connList2[num]))
             polyList.append(polygon(connList1[k], connList2[k], connList2[num]))
             connections[connList1[k]].append(connList2[k])
-
-        print(len(polyList))
 
         newMatrix = newList
     else:
@@ -399,7 +393,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord+400)
             k.set_z(k.zCoord+400)
 
-    return connections, newMatrix
+    return connections, newMatrix, polyList
 
 
 def newCirc(res, axis, vol):
@@ -481,11 +475,6 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         print("not a valid mesh")
         sys.exit(1)
 
-
-    # for k in polyList:
-    #     print(k.point1.send_vals(), k.point2.send_vals(), k.point3.send_vals())
-
-
     if isScene:
 
         for k in newMatrix:
@@ -508,7 +497,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord + 200)
             k.set_z(k.zCoord + 200)
 
-    return connections, newMatrix, faceDict
+    return connections, newMatrix, faceDict, polyList
 
 
 def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
@@ -541,16 +530,19 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     connections = {}
     count = 0
 
+    squareList = []
     polyList = []
 
-    polyList.append(squarePoly(points[0], points[1], points[3], points[2]))
-    polyList.append(squarePoly(points[4], points[5], points[1], points[0]))
-    polyList.append(squarePoly(points[4], points[0], points[2], points[6]))
-    polyList.append(squarePoly(points[5], points[4], points[6], points[7]))
-    polyList.append(squarePoly(points[1], points[5], points[7], points[3]))
-    polyList.append(squarePoly(points[2], points[3], points[7], points[6]))
+    squareList.append(squarePoly(points[0], points[1], points[3], points[2]))
+    squareList.append(squarePoly(points[4], points[5], points[1], points[0]))
+    squareList.append(squarePoly(points[4], points[0], points[2], points[6]))
+    squareList.append(squarePoly(points[5], points[4], points[6], points[7]))
+    squareList.append(squarePoly(points[1], points[5], points[7], points[3]))
+    squareList.append(squarePoly(points[2], points[3], points[7], points[6]))
 
-    test = newGrid(res, points, vol, polyList)
+    polyList = newGrid(res, points, vol, squareList)
+
+    
 
     # create mesh based on connections
     if mesh == "tri":
@@ -625,7 +617,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_z(k.zCoord + 400)
 
 
-    return connections, matrix, faceDict
+    return connections, matrix, faceDict, polyList
 
 
 def newGrid(res, points, vol, squares):
@@ -647,7 +639,7 @@ def newGrid(res, points, vol, squares):
             gap = int((max(p1[1], p2[1], p3[1], p4[1]) - min(p1[1], p2[1], p3[1], p4[1])) / res)
             start = min(p1[1], p2[1], p3[1], p4[1])
             end = max(p1[1], p2[1], p3[1], p4[1])
-            print("on x axis", gap)
+            
 
             for l in range(start, end+1, gap):
                 sampleList = []
@@ -672,7 +664,7 @@ def newGrid(res, points, vol, squares):
             gap = int((max(p1[2], p2[2], p3[2], p4[2]) - min(p1[2], p2[2], p3[2], p4[2])) / res)
             start = min(p1[2], p2[2], p3[2], p4[2])
             end = max(p1[2], p2[2], p3[2], p4[2])
-            print("on y axis", gap)
+           
 
             for l in range(start, end+1, gap):
                 sampleList = []
@@ -697,7 +689,7 @@ def newGrid(res, points, vol, squares):
 
             start = min(p1[0], p2[0], p3[0], p4[0])
             end = max(p1[0], p2[0], p3[0], p4[0])
-            print("on z axis", gap)
+            
 
             # grid triangulation on z axis faces
             for l in range(start, end+1, gap):
@@ -717,23 +709,6 @@ def newGrid(res, points, vol, squares):
 
                     polyList.append(polygon(list1[m-1], list1[m], list2[m]))
                     polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
-
-        print(len(polyList))
-
-
-
-
-
-
-
-    # check cube poly for the points
-    # check which axis the points are on
-    # for each column
-    # draw the row
-    # store each row
-    #
-    # for each row in the row list
-    # compare curr list with next list
 
     return polyList
 
@@ -794,8 +769,6 @@ def grid(resolution, points, vol):
 
             for k in range(start, end, gap):
                 newFinal.append([k, x[0][1], x[0][2]])
-
-    print(len(newFinal))
 
     return newFinal, gap
 
@@ -874,20 +847,22 @@ def scene(mesh, resolution, volume, isScene):
     zangle = float(input("What angle (in radians) do you wish to rotate on the z axis by?"))
 
     matricies = []
+    polygons = []
     connectionsDict = {}
 
-    connections, matrix1, faceDict1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
+
+    connections, matrix1, faceDict1, polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
 
     connectionsDict.update(connections)
 
 
-    connections, matrix2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    connections, matrix2, polyList2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
     removeWrapping(matrix2)
 
     connectionsDict.update(connections)
 
-    connections, matrix3, faceDict2 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    connections, matrix3, faceDict2, polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
     removeWrapping(matrix3)
 
     tempDict = connections
@@ -898,6 +873,10 @@ def scene(mesh, resolution, volume, isScene):
 
     faceDict.update(faceDict2)
     faceDict.update(faceDict1)
+
+    polygons = polyList1
+
+    print(len(polygons))
 
 
     matricies.append(matrix1)
@@ -956,45 +935,22 @@ def scene(mesh, resolution, volume, isScene):
             for val in v:
                 pointDict[k].append(val)
 
-    flattened = [val for sublist in matricies for val in sublist]
+    # flattened = [val for sublist in matricies for val in sublist]
 
-    translate(flattened, 500)
-    rotation(flattened, xangle, yangle, zangle)
-    translate(flattened, -500)
+    # translate(flattened, 500)
+    # rotation(flattened, xangle, yangle, zangle)
+    # translate(flattened, -500)
 
-    pointsToRemove = []
+    flattened = []
 
+    for k in polygons:
+        flattened.append(k.point1)
+        flattened.append(k.point2)
+        flattened.append(k.point3)
 
-    # for key, val in faceDict.items():
-    #     print(key, val)
-
-    temp = []
-
-    # for key, val in faceDict.items():
-    #     p0 = val[0].send_vals()
-    #     p3 = val[3].send_vals()
-    #     p2 = val[2].send_vals()
+    
 
 
-    #     pneg = [p0[0] - 500, p0[1] - 500, p0[2] - 800]
-
-    #     v1 = vectorSub(p3, p0)
-    #     v2 = vectorSub(p2, p0)
-
-    #     norm = crossProduct(v2, v1)
-
-    #     result = dotProduct(norm, pneg)
-
-    #     if result < 0:
-    #         print(key)
-
-    #         toKeep = pointDict[key]
-
-
-    #         # TODO: FIX THIS LOOP ITS WRONG (maybe working now)
-    #         for x in toKeep:
-    #             if x not in temp:
-    #                 temp.append(x)
 
     temp = []
 
@@ -1020,56 +976,12 @@ def scene(mesh, resolution, volume, isScene):
 
             connectionsDict.pop(val, None)
 
-
-
-
-    # newDict = {}
-
-    # keys = set(temp).intersection(set(connectionsDict.keys()))
-
-    # newDict = {k: connectionsDict[k] for k in keys}
-
-    # for key, vals in newDict.items():
-    #     newVals = []
-    #     for k in vals:
-    #         if k in temp:
-    #             newVals.append(k)
-    #     newDict[key] = newVals
-
-
-    # print(len(newDict.values()), len(connectionsDict.values()))
-
-
-
-
-    #     if result < 0:
-    #         maxX = max(value.get_x() for value in val)
-    #         maxY = max(value.get_y() for value in val)
-    #         maxZ = max(value.get_z() for value in val)
-
-    #         minX = min(value.get_x() for value in val)
-    #         minY = min(value.get_y() for value in val)
-    #         minZ = min(value.get_z() for value in val)
-
-
-    #         for x in matrix1:
-    #             if minX <= x.get_x() <= maxX and minY <= x.get_y() <= maxY and minZ <= x.get_z() <= maxZ and x not in pointsToRemove:
-    #                 pointsToRemove.append(x)
-
-
-    # for i in pointsToRemove:
-    #     flattened.remove(i)
-
-    # for i in pointsToRemove:
-    #     if i in connectionsDict:
-    #         del connectionsDict[i]
-
     removeWrapping(flattened)
 
     newFlattened = []
 
 
-    image, matrix4 = imaging(flattened, connectionsDict, "final.png")
+    image, matrix4 = imaging(flattened, connectionsDict, "final.png", polygons)
 
     return 0
 
@@ -1090,12 +1002,16 @@ def spherical(matrix, xAngle, yAngle):
             j.set_z(newZ)
 
 
-def imaging(matrix, connections, name):
+def imaging(matrix, connections, name, polyList):
 
     # limitx = max(x[0].get_x() for x in matrix)
     # limity = max(x[1].get_y() for x in matrix)
 
     # create an image matrix that is empty
+    
+
+
+
     image = [[RGB(0, 0, 0) for j in range(1000)] for k in range(1000)]
 
     # place a value of 255 on the image where the cube will be
@@ -1105,9 +1021,19 @@ def imaging(matrix, connections, name):
         image[i.get_x()][i.get_y()].cBlue = 255
 
     # rasterize a line between the key and each of its respective points
-    for key, val in connections.items():
-        for point in val:
-            rasterize(key, point, image)
+    # for key, val in connections.items():
+    #     for point in val:
+    #         rasterize(key, point, image)
+
+
+    for val in polyList:
+        key = val.values()
+        new = list(itertools.combinations(key, 2))
+        for k in new:
+            print(k[0].send_vals(), k[1].send_vals())
+            rasterize(k[0], k[1], image)
+
+
 
     newImage = image
 
