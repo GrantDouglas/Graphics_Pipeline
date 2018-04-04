@@ -304,7 +304,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
     points = []
     connections = {}
-    faceDict = {}
     test = []
     finalConnect = []
     polyList = []
@@ -339,9 +338,8 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
             polyList.append(polygon(connList1[1], first, second))
 
-
+        # making the last connection on first circle
         connections[connList1[-1]] = [connList1[2], connList1[1]]
-
         polyList.append(polygon(connList1[1], connList1[-1], connList1[2]))
 
         # connect all points in second circle of cylinder
@@ -351,8 +349,9 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
             polyList.append(polygon(connList2[0], first, second))
 
-        connections[connList2[-1]] = [connList2[2], connList2[0]]
 
+        # Making the last connection on second circle
+        connections[connList2[-1]] = [connList2[2], connList2[0]]
         polyList.append(polygon(connList2[0], connList2[-1], connList2[2]))
 
         # connect all points in both circles to each other based on index
@@ -371,6 +370,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
         sys.exit(1)
 
 
+    # transform the points
     if isScene:
         for k in newMatrix:
             k.set_x(k.xCoord + 250 + (vol/4))
@@ -398,7 +398,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
 def newCirc(res, axis, vol):
 
-
     r = volume - 1
     angle = 0
     connectList = []
@@ -421,8 +420,6 @@ def newCirc(res, axis, vol):
     return connectList
 
 
-
-
 def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     """Creates a cone
 
@@ -435,7 +432,6 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
 
     points = []
     connections = {}
-    faceDict = {}
     test = []
     finalConnect = []
     polyList = []
@@ -475,6 +471,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
         print("not a valid mesh")
         sys.exit(1)
 
+    # translate the points
     if isScene:
 
         for k in newMatrix:
@@ -497,7 +494,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord + 200)
             k.set_z(k.zCoord + 200)
 
-    return connections, newMatrix, faceDict, polyList
+    return connections, newMatrix, polyList
 
 
 def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
@@ -523,16 +520,18 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
         [vol, -vol, vol],
         [-vol, -vol, vol]
         ]
+
     cubeList = []
     faceDict = {}
     finalPoints = []
     matrix = []
     connections = {}
     count = 0
-
     squareList = []
     polyList = []
+    coordList = []
 
+    # add square faces to a square face list
     squareList.append(squarePoly(points[0], points[1], points[3], points[2]))
     squareList.append(squarePoly(points[4], points[5], points[1], points[0]))
     squareList.append(squarePoly(points[4], points[0], points[2], points[6]))
@@ -540,58 +539,16 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     squareList.append(squarePoly(points[1], points[5], points[7], points[3]))
     squareList.append(squarePoly(points[2], points[3], points[7], points[6]))
 
+    # create the new grid with the triangles within
     polyList = newGrid(res, points, vol, squareList)
 
-    
+    # create a list of all points created
+    for k in polyList:
+        for l in k.values():
+            if l not in coordList:
+                coordList.append(l)
 
-    # create mesh based on connections
-    if mesh == "tri":
-        triangGrid, gap = grid(res, points, vol)
-        newPoints = triangGrid + points
-    elif mesh == "poly":
-        newPoints = points
-    else:
-        print("not a valid mesh")
-        sys.exit(1)
-
-    # create a list of unique points
-    for x in newPoints:
-        if x not in finalPoints:
-            finalPoints.append(x)
-
-    coordList = [coords(x[0], x[1], x[2]) for x in finalPoints]
-
-    # store the points in a matrix
-    for k in coordList:
-        k.set_x(k.xCoord)
-        k.set_y(k.yCoord)
-        k.set_z(k.zCoord)
-        matrix.append(k)
-
-    # create a set out of these coordinates to use as keys for the connection dictionary
-    coordSet = [x for x in matrix]
-
-    # create a dictionary which maps each point to a list of connected points
-    for key in coordSet:
-        connections[key] = connect(coordList, key, gap, resolution)
-
-    for k in points:
-        temp = 0
-        for j in coordSet:
-            if k == j.send_vals():
-                stuff = True
-                temp = j
-        if stuff == True:
-            cubeList.append(temp)
-
-    # all faces that make up the cube, given corner points
-    faceDict[0] = [cubeList[0], cubeList[1], cubeList[3], cubeList[2]]
-    faceDict[1] = [cubeList[4], cubeList[5], cubeList[1], cubeList[0]]
-    faceDict[2] = [cubeList[4], cubeList[0], cubeList[2], cubeList[6]]
-    faceDict[3] = [cubeList[5], cubeList[4], cubeList[6], cubeList[7]]
-    faceDict[4] = [cubeList[1], cubeList[5], cubeList[7], cubeList[3]]
-    faceDict[5] = [cubeList[2], cubeList[3], cubeList[7], cubeList[6]]
-
+    # translate the points
     if isScene:
         for k in coordList:
             k.set_x(k.xCoord + 400)
@@ -617,14 +574,12 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_z(k.zCoord + 400)
 
 
-    return connections, matrix, faceDict, polyList
+    return connections, matrix, polyList
 
 
 def newGrid(res, points, vol, squares):
 
     polyList = []
-
-    # print(squares)
 
     for k in squares:
         p1 = k.p1
@@ -634,13 +589,14 @@ def newGrid(res, points, vol, squares):
 
         lists = []
 
-
+        # The square lies on the x axis
         if p1[0] == p2[0] == p3[0] == p4[0]:
             gap = int((max(p1[1], p2[1], p3[1], p4[1]) - min(p1[1], p2[1], p3[1], p4[1])) / res)
             start = min(p1[1], p2[1], p3[1], p4[1])
             end = max(p1[1], p2[1], p3[1], p4[1])
             
 
+            # grid creation of square surface, storing each square in the row
             for l in range(start, end+1, gap):
                 sampleList = []
                 for m in range(start, end+1, gap):
@@ -650,22 +606,26 @@ def newGrid(res, points, vol, squares):
 
                 lists.append(sampleList)
 
+            # compare a row and the next row
             for l in range(1, res+1):
                 list1 = lists[l-1]
                 list2 = lists[l]
 
+                #  divide the square in the row into 2 triangles
                 for m in range(1, res+1):
-
                     polyList.append(polygon(list1[m-1], list1[m], list2[m]))
                     polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
 
 
+        # the square lies on the y axis
         elif p1[1] == p2[1] == p3[1] == p4[1]:
+
+            # create a gap interval based on resolution, and define a start and end point
             gap = int((max(p1[2], p2[2], p3[2], p4[2]) - min(p1[2], p2[2], p3[2], p4[2])) / res)
             start = min(p1[2], p2[2], p3[2], p4[2])
             end = max(p1[2], p2[2], p3[2], p4[2])
            
-
+            # loop from start to end, jumping each gap interval, and store the point into a list
             for l in range(start, end+1, gap):
                 sampleList = []
                 for m in range(start, end+1, gap):
@@ -675,15 +635,18 @@ def newGrid(res, points, vol, squares):
 
                 lists.append(sampleList)
 
+            # compare a row and the next row
             for l in range(1, res+1):
                 list1 = lists[l-1]
                 list2 = lists[l]
 
+                # divide the square in the row into 2 triangles
                 for m in range(1, res+1):
-
                     polyList.append(polygon(list1[m-1], list1[m], list2[m]))
                     polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
 
+
+        # the square lies on the z axis
         elif p1[2] == p2[2] == p3[2] == p4[2]:
             gap = int((max(p1[0], p2[0], p3[0], p4[0]) - min(p1[0], p2[0], p3[0], p4[0])) / res)
 
@@ -701,76 +664,17 @@ def newGrid(res, points, vol, squares):
 
                 lists.append(sampleList)
 
+            # compare a row and the next row
             for l in range(1, res+1):
                 list1 = lists[l-1]
                 list2 = lists[l]
 
+                # divide the square in the row into 2 triangles
                 for m in range(1, res+1):
-
                     polyList.append(polygon(list1[m-1], list1[m], list2[m]))
                     polyList.append(polygon(list1[m-1], list2[m-1], list2[m]))
 
     return polyList
-
-
-def grid(resolution, points, vol):
-    """Create a grid on a square surface
-
-    This function will create a grid of a specified resolution onto a surface identified by coordinates
-
-    Arguments:
-        resolution {int} -- The resolution of the grid
-        points {list} -- The list of points that make up the cube
-
-    Returns:
-        list -- A list of points which
-    """
-
-
-    new = list(itertools.combinations(points, 2))
-    final = []
-
-    # find all unique pair combinations within the point list
-    for x in new:
-        if (x[1][0] - x[0][0] == 0 and x[1][2] == x[0][2]) or (x[1][1] - x[0][1] == 0 and x[1][2] == x[0][2]) or (x[1][2] - x[0][2] != 0 and x[1][1] == x[0][1] and x[1][0] == x[0][0]):
-            final.append(x)
-
-    newFinal = []
-
-    for x in final:
-
-        # place grid points on z axis lines if the z axis are equal
-        if x[1][2] - x[0][2] != 0:
-
-            gap = int((abs(x[0][2]) + abs(x[1][2])) / resolution)
-
-            start = min(x[0][2], x[1][2])
-            end = max(x[0][2], x[1][2])
-
-            for k in range(start, end, gap):
-                newFinal.append([x[0][0], x[0][1], k])
-
-        # place grid points on y axis lines if the x axis are equal
-        elif x[1][0] - x[0][0] == 0:
-            gap = int((abs(x[0][1]) + abs(x[1][1])) / resolution)
-
-            start = min(x[0][1], x[1][1])
-            end = max(x[0][1], x[1][1])
-
-            for k in range(start, end, gap):
-                newFinal.append([x[0][0], k, x[0][2]])
-
-        # place grid points on x axis lines if the y axis are equal
-        elif x[1][1] - x[0][1] == 0:
-            gap = int((abs(x[0][0]) + abs(x[1][0])) / resolution)
-
-            start = min(x[0][0], x[1][0])
-            end = max(x[0][0], x[1][0])
-
-            for k in range(start, end, gap):
-                newFinal.append([k, x[0][1], x[0][2]])
-
-    return newFinal, gap
 
 
 def matrixVectorMultiply(vector, matrix):
@@ -851,9 +755,8 @@ def scene(mesh, resolution, volume, isScene):
     connectionsDict = {}
 
 
-    connections, matrix1, faceDict1, polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
+    connections, matrix1, polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
     removeWrapping(matrix1)
-
     connectionsDict.update(connections)
 
 
@@ -862,124 +765,37 @@ def scene(mesh, resolution, volume, isScene):
 
     connectionsDict.update(connections)
 
-    connections, matrix3, faceDict2, polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    connections, matrix3, polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
     removeWrapping(matrix3)
 
     tempDict = connections
 
     connectionsDict.update(connections)
 
-    faceDict = {}
 
-    faceDict.update(faceDict2)
-    faceDict.update(faceDict1)
-
-    polygons = polyList1
-
-    print(len(polygons))
-
-
-    matricies.append(matrix1)
-    matricies.append(matrix2)
-    matricies.append(matrix3)
-
-
-    viewTransform(matricies)
-
-    pointDict = {}
-
-    for k in range(0, 6):
-        temp = faceDict[k]
-        pointDict[k] = []
-
-        if(temp[0].get_x() == temp[1].get_x() == temp[2].get_x() == temp[3].get_x()):
-
-            max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
-            max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
-
-            min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
-            min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
-
-            for x in matrix1:
-                if min_y <= x.get_y() <= max_y and min_z <= x.get_z() <= max_z and x.get_x() == temp[0].get_x():
-                    pointDict[k].append(x)
-
-        elif(temp[0].get_y() == temp[1].get_y() == temp[2].get_y() == temp[3].get_y()):
-
-            max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
-            max_z = max(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
-
-            min_x = min(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
-            min_z = min(temp[0].get_z(), temp[1].get_z(), temp[2].get_z(), temp[3].get_z())
-
-            for x in matrix1:
-                if min_x <= x.get_x() <= max_x and min_z <= x.get_z() <= max_z and x.get_y() == temp[0].get_y():
-                    pointDict[k].append(x)
-
-        elif(temp[0].get_z() == temp[1].get_z() == temp[2].get_z() == temp[3].get_z()):
-
-            max_x = max(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
-            max_y = max(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
-
-            min_x = min(temp[0].get_x(), temp[1].get_x(), temp[2].get_x(), temp[3].get_x())
-            min_y = min(temp[0].get_y(), temp[1].get_y(), temp[2].get_y(), temp[3].get_y())
-
-
-            for x in matrix1:
-                if min_x <= x.get_x() <= max_x and min_y <= x.get_y() <= max_y and x.get_z() == temp[0].get_z():
-                    pointDict[k].append(x)
-
-    for k in range(6, resolution*2+6):
-        pointDict[k] = []
-        for key, v in faceDict2.items():
-            for val in v:
-                pointDict[k].append(val)
-
-    # flattened = [val for sublist in matricies for val in sublist]
-
-    # translate(flattened, 500)
-    # rotation(flattened, xangle, yangle, zangle)
-    # translate(flattened, -500)
+    polygons = polyList1 + polyList2 + polyList3
 
     flattened = []
 
+    # create list of points to apply transformations
     for k in polygons:
-        flattened.append(k.point1)
-        flattened.append(k.point2)
-        flattened.append(k.point3)
+        if k.point1 not in flattened:
+            flattened.append(k.point1)
+        
+        if k.point2 not in flattened:
+            flattened.append(k.point2)
 
-    
-
-
-
-    temp = []
-
-
-
-    for k, v in faceDict.items():
-
-        edge1 = (v[1].get_x() - v[0].get_x()) * (v[1].get_y() + v[0].get_y())
-        edge2 = (v[2].get_x() - v[1].get_x()) * (v[2].get_y() + v[1].get_y())
-        edge3 = (v[0].get_x() - v[2].get_x()) * (v[0].get_y() + v[2].get_y())
-        # edge4 = (v[0].get_x() - v[3].get_x()) * (v[0].get_y() + v[3].get_y())
-
-        result = edge1 + edge2 + edge3
+        if k.point3 not in flattened:
+            flattened.append(k.point3)
+       
+    # transform points
+    translate(flattened, 500)
+    rotation(flattened, xangle, yangle, zangle)
+    translate(flattened, -500)
 
 
-        if result < 0:
-
-            for vals in pointDict[k]:
-                temp.append(vals)
-
-    for val in temp:
-        if val not in tempDict.keys():
-
-            connectionsDict.pop(val, None)
-
+    # remove any points that are outside of the image bounds
     removeWrapping(flattened)
-
-    newFlattened = []
-
 
     image, matrix4 = imaging(flattened, connectionsDict, "final.png", polygons)
 
@@ -1004,14 +820,6 @@ def spherical(matrix, xAngle, yAngle):
 
 def imaging(matrix, connections, name, polyList):
 
-    # limitx = max(x[0].get_x() for x in matrix)
-    # limity = max(x[1].get_y() for x in matrix)
-
-    # create an image matrix that is empty
-    
-
-
-
     image = [[RGB(0, 0, 0) for j in range(1000)] for k in range(1000)]
 
     # place a value of 255 on the image where the cube will be
@@ -1020,23 +828,18 @@ def imaging(matrix, connections, name, polyList):
         image[i.get_x()][i.get_y()].cGreen = 255
         image[i.get_x()][i.get_y()].cBlue = 255
 
-    # rasterize a line between the key and each of its respective points
-    # for key, val in connections.items():
-    #     for point in val:
-    #         rasterize(key, point, image)
-
-
+    # rasterize each of the polygons
     for val in polyList:
         key = val.values()
+        
+        # find all combinations of 2 points in 3 point polygon
         new = list(itertools.combinations(key, 2))
+
+        # connect each point pair together, which forms a triangle
         for k in new:
-            print(k[0].send_vals(), k[1].send_vals())
             rasterize(k[0], k[1], image)
 
-
-
     newImage = image
-
 
 
     # create a new image matrix with just the colour values of the cells
