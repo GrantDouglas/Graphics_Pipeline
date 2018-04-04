@@ -303,7 +303,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
     """
 
     points = []
-    connections = {}
     test = []
     finalConnect = []
     polyList = []
@@ -333,25 +332,20 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
        # connect all points in first circle of cylinder
         for first, second in zip(connList1[2:], connList1[3:]):
-            connections[first] = [connList1[1], second]
-            connections[second] = [connList1[1], first]
 
             polyList.append(polygon(connList1[1], first, second))
 
         # making the last connection on first circle
-        connections[connList1[-1]] = [connList1[2], connList1[1]]
+        
         polyList.append(polygon(connList1[1], connList1[-1], connList1[2]))
 
         # connect all points in second circle of cylinder
         for first, second in zip(connList2[2:], connList2[3:]):
-            connections[first] = [connList2[0], second]
-            connections[second] = [connList2[0], first]
 
             polyList.append(polygon(connList2[0], first, second))
 
 
         # Making the last connection on second circle
-        connections[connList2[-1]] = [connList2[2], connList2[0]]
         polyList.append(polygon(connList2[0], connList2[-1], connList2[2]))
 
         # connect all points in both circles to each other based on index
@@ -362,7 +356,6 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
 
             polyList.append(polygon(connList1[k], connList1[num], connList2[num]))
             polyList.append(polygon(connList1[k], connList2[k], connList2[num]))
-            connections[connList1[k]].append(connList2[k])
 
         newMatrix = newList
     else:
@@ -393,7 +386,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord+400)
             k.set_z(k.zCoord+400)
 
-    return connections, newMatrix, polyList
+    return polyList
 
 
 def newCirc(res, axis, vol):
@@ -431,7 +424,6 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
     """
 
     points = []
-    connections = {}
     test = []
     finalConnect = []
     polyList = []
@@ -451,16 +443,10 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
 
         # connect all points in circle and point to each other
         for first, second in zip(newList[2:], newList[3:]):
-            connections[first] = [newList[0], newList[1], second]
-            connections[second] = [newList[0], newList[1], first]
 
             # testing polygon
             polyList.append(polygon(newList[0], first, second))
             polyList.append(polygon(newList[1], first, second))
-
-
-        connections[newList[-1]] = [newList[0], newList[2], newList[1]]
-
 
         # testing polygon
         polyList.append(polygon(newList[0], newList[-1], newList[2]))
@@ -494,7 +480,7 @@ def cone(res, mesh, vol, isScene, xangle, yangle, zangle):
             k.set_y(k.yCoord + 200)
             k.set_z(k.zCoord + 200)
 
-    return connections, newMatrix, polyList
+    return polyList
 
 
 def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
@@ -524,8 +510,6 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
     cubeList = []
     faceDict = {}
     finalPoints = []
-    matrix = []
-    connections = {}
     count = 0
     squareList = []
     polyList = []
@@ -574,7 +558,7 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_z(k.zCoord + 400)
 
 
-    return connections, matrix, polyList
+    return polyList
 
 
 def newGrid(res, points, vol, squares):
@@ -752,27 +736,18 @@ def scene(mesh, resolution, volume, isScene):
 
     matricies = []
     polygons = []
-    connectionsDict = {}
+    
 
+    # create the cube
+    polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
 
-    connections, matrix1, polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
-    removeWrapping(matrix1)
-    connectionsDict.update(connections)
-
-
-    connections, matrix2, polyList2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    removeWrapping(matrix2)
-
-    connectionsDict.update(connections)
-
-    connections, matrix3, polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    removeWrapping(matrix3)
-
-    tempDict = connections
-
-    connectionsDict.update(connections)
-
-
+    # create the cylinder
+    polyList2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    
+    # create the cone 
+    polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
+    
+    # combine the polygons into 1 list
     polygons = polyList1 + polyList2 + polyList3
 
     flattened = []
@@ -793,11 +768,10 @@ def scene(mesh, resolution, volume, isScene):
     rotation(flattened, xangle, yangle, zangle)
     translate(flattened, -500)
 
-
     # remove any points that are outside of the image bounds
     removeWrapping(flattened)
 
-    image, matrix4 = imaging(flattened, connectionsDict, "final.png", polygons)
+    image, matrix4 = imaging(flattened, "final.png", polygons)
 
     return 0
 
@@ -818,7 +792,7 @@ def spherical(matrix, xAngle, yAngle):
             j.set_z(newZ)
 
 
-def imaging(matrix, connections, name, polyList):
+def imaging(matrix, name, polyList):
 
     image = [[RGB(0, 0, 0) for j in range(1000)] for k in range(1000)]
 
@@ -831,7 +805,7 @@ def imaging(matrix, connections, name, polyList):
     # rasterize each of the polygons
     for val in polyList:
         key = val.values()
-        
+
         # find all combinations of 2 points in 3 point polygon
         new = list(itertools.combinations(key, 2))
 
