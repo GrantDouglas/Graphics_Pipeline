@@ -876,6 +876,3 @@ if __name__ == "__main__":
         print("WIP: try using cube, cylinder, cone, or scene instead")
         sys.exit(1)
 
-
-
-
