@@ -693,6 +693,45 @@ def viewTransform(pointMatrix):
     print(yAxis)
 
 
+def backFaceCulling(polygons):
+
+    
+    count = 0
+    print(len(polygons))
+
+    deleteList = []
+
+    for k in polygons:
+        p1 = k.point1
+        p2 = k.point2
+        p3 = k.point3
+
+        
+        
+        vector1 = vectorSub(p2.send_vals(), p1.send_vals())
+        vector2 = vectorSub(p3.send_vals(), p1.send_vals())
+
+        normal = crossProduct(vector1, vector2)
+
+        negativeP1 = [p1.get_x() - 500, p1.get_y() - 500, p1.get_z() - 500]
+
+        final = dotProduct(negativeP1, normal)
+
+        
+
+        if final >= 0:
+            count += 1
+            deleteList.append(k)
+
+
+    print("count is", count)
+
+    return deleteList
+
+
+
+
+
 
 def scene(mesh, resolution, volume, isScene):
 
@@ -748,7 +787,7 @@ def scene(mesh, resolution, volume, isScene):
     polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
     
     # combine the polygons into 1 list
-    polygons = polyList1 + polyList2 + polyList3
+    polygons = polyList1
 
     flattened = []
 
@@ -771,7 +810,34 @@ def scene(mesh, resolution, volume, isScene):
     # remove any points that are outside of the image bounds
     removeWrapping(flattened)
 
-    image, matrix4 = imaging(flattened, "final.png", polygons)
+    delete = backFaceCulling(polygons)
+
+    for k in polygons:
+        for j in k.values():
+            print(j.send_vals())
+
+    print("break")
+
+    for k in delete:
+        for j in k.values():
+            print(j.send_vals())
+
+    print("poly is", len(polygons), "delete is", len(delete))
+
+    final = set(polygons) - set(delete)
+
+    print(len(final))
+
+    for k in final:
+        for j in k.values():
+            print(j.send_vals())
+
+
+    for k in flattened:
+        for j in final:
+
+
+    image, matrix4 = imaging(flattened, "final.png", final)
 
     return 0
 
@@ -801,6 +867,8 @@ def imaging(matrix, name, polyList):
         image[i.get_x()][i.get_y()].cRed = 255
         image[i.get_x()][i.get_y()].cGreen = 255
         image[i.get_x()][i.get_y()].cBlue = 255
+
+    print(len(polyList))
 
     # rasterize each of the polygons
     for val in polyList:
