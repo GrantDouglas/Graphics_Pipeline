@@ -5,6 +5,7 @@ import math, time, sys, array, os, copy, itertools
 from itertools import cycle
 from operator import attrgetter
 import numpy as np
+import random
 from PIL import Image
 
 
@@ -17,6 +18,7 @@ class RGB:
         self.cRed = red
         self.cBlue = blue
         self.cGreen = green
+
 
     def printing(self):
         print(self.cRed)
@@ -61,6 +63,14 @@ class polygon:
         self.point1 = p1
         self.point2 = p2
         self.point3 = p3
+        self.red = 0
+        self.green = 0
+        self.blue = 0
+
+    def setCol(self, r, g, b):
+        self.red = r
+        self.green = g
+        self.blue = b
 
     def values(self):
         return [self.point1, self.point2, self.point3]
@@ -189,42 +199,6 @@ def zTransform(points, angle):
         i.set_y(newy)
 
 
-def rasterize(point1, point2, image):
-    """Rasterize a line between two points
-
-    This function will rasterize a line between two points using the DDA
-
-    Arguments:
-        point1 {coord} -- A coord object which specifies the first point to rasterize
-        point2 {coord} -- A coord object which specifies the second point to rasterize
-        image {List of RGB} -- The image matrix which stores each points RGB value
-    """
-    dx = abs(point2.get_x() - point1.get_x())
-    dy = abs(point2.get_y() - point1.get_y())
-
-    if dx > dy:
-        length = dx
-    elif dy > dx:
-        length = dy
-    else:
-        length = 1
-
-    dx = (point2.get_x() - point1.get_x())/float(length)
-    dy = (point2.get_y() - point1.get_y())/float(length)
-
-    x = point1.get_x()
-    y = point1.get_y()
-    image[math.ceil(x)][math.ceil(y)].cRed = 255
-    image[math.ceil(x)][math.ceil(y)].cGreen = 255
-    image[math.ceil(x)][math.ceil(y)].cBlue = 255
-
-    for i in range(length-1):
-        x += dx
-        y += dy
-        image[math.ceil(x)][math.ceil(y)].cRed = 255
-        image[math.ceil(x)][math.ceil(y)].cGreen = 255
-        image[math.ceil(x)][math.ceil(y)].cBlue = 255
-
 
 def dotProduct(v1, v2):
     return sum(i * j for i, j in zip(v1, v2))
@@ -336,7 +310,7 @@ def cylinder(resolution, mesh, vol, isScene, xangle, yangle, zangle):
             polyList.append(polygon(connList1[1], first, second))
 
         # making the last connection on first circle
-        
+
         polyList.append(polygon(connList1[1], connList1[-1], connList1[2]))
 
         # connect all points in second circle of cylinder
@@ -578,7 +552,7 @@ def newGrid(res, points, vol, squares):
             gap = int((max(p1[1], p2[1], p3[1], p4[1]) - min(p1[1], p2[1], p3[1], p4[1])) / res)
             start = min(p1[1], p2[1], p3[1], p4[1])
             end = max(p1[1], p2[1], p3[1], p4[1])
-            
+
 
             # grid creation of square surface, storing each square in the row
             for l in range(start, end+1, gap):
@@ -608,7 +582,7 @@ def newGrid(res, points, vol, squares):
             gap = int((max(p1[2], p2[2], p3[2], p4[2]) - min(p1[2], p2[2], p3[2], p4[2])) / res)
             start = min(p1[2], p2[2], p3[2], p4[2])
             end = max(p1[2], p2[2], p3[2], p4[2])
-           
+
             # loop from start to end, jumping each gap interval, and store the point into a list
             for l in range(start, end+1, gap):
                 sampleList = []
@@ -636,7 +610,7 @@ def newGrid(res, points, vol, squares):
 
             start = min(p1[0], p2[0], p3[0], p4[0])
             end = max(p1[0], p2[0], p3[0], p4[0])
-            
+
 
             # grid triangulation on z axis faces
             for l in range(start, end+1, gap):
@@ -695,7 +669,7 @@ def viewTransform(pointMatrix):
 
 def backFaceCulling(polygons):
 
-    
+
     count = 0
     print(len(polygons))
 
@@ -706,20 +680,18 @@ def backFaceCulling(polygons):
         p2 = k.point2
         p3 = k.point3
 
-        
-        
         vector1 = vectorSub(p2.send_vals(), p1.send_vals())
         vector2 = vectorSub(p3.send_vals(), p1.send_vals())
 
         normal = crossProduct(vector1, vector2)
 
-        negativeP1 = [p1.get_x() - 500, p1.get_y() - 500, p1.get_z() - 500]
+        negativeP1 = [p1.get_x() - 500, p1.get_y() - 500, p1.get_z() + 800]
 
         final = dotProduct(negativeP1, normal)
 
-        
 
-        if final >= 0:
+
+        if final <= 0:
             count += 1
             deleteList.append(k)
 
@@ -727,10 +699,6 @@ def backFaceCulling(polygons):
     print("count is", count)
 
     return deleteList
-
-
-
-
 
 
 def scene(mesh, resolution, volume, isScene):
@@ -775,19 +743,19 @@ def scene(mesh, resolution, volume, isScene):
 
     matricies = []
     polygons = []
-    
+
 
     # create the cube
     polyList1 = cube(resolution, mesh, isScene, xangle, yangle, zangle, volume)
 
     # create the cylinder
     polyList2 = cylinder(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    
-    # create the cone 
+
+    # create the cone
     polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
-    
+
     # combine the polygons into 1 list
-    polygons = polyList1
+    polygons = polyList3 + polyList1 + polyList2
 
     flattened = []
 
@@ -795,13 +763,13 @@ def scene(mesh, resolution, volume, isScene):
     for k in polygons:
         if k.point1 not in flattened:
             flattened.append(k.point1)
-        
+
         if k.point2 not in flattened:
             flattened.append(k.point2)
 
         if k.point3 not in flattened:
             flattened.append(k.point3)
-       
+
     # transform points
     translate(flattened, 500)
     rotation(flattened, xangle, yangle, zangle)
@@ -813,33 +781,134 @@ def scene(mesh, resolution, volume, isScene):
     delete = backFaceCulling(polygons)
 
     for k in polygons:
-        for j in k.values():
-            print(j.send_vals())
+        x = random.randint(0, 255)
+        y = random.randint(0, 255)
+        z = random.randint(0, 255)
+        k.setCol(x, y, z)
 
-    print("break")
-
-    for k in delete:
-        for j in k.values():
-            print(j.send_vals())
-
-    print("poly is", len(polygons), "delete is", len(delete))
-
-    final = set(polygons) - set(delete)
-
-    print(len(final))
-
-    for k in final:
-        for j in k.values():
-            print(j.send_vals())
-
-
-    for k in flattened:
-        for j in final:
-
-
-    image, matrix4 = imaging(flattened, "final.png", final)
+    image, matrix4 = imaging(flattened, "final.png", polygons)
 
     return 0
+
+
+def zBuffer(polygons):
+    frameBuffer = []
+    depthBuffer = []
+
+    for value in polygons:
+        print(value)
+
+
+def newRaster(polygon, image):
+    p1 = polygon.point1
+    p2 = polygon.point2
+    p3 = polygon.point3
+
+    red = polygon.red
+    green = polygon.green
+    blue = polygon.blue
+
+    edge1 = [p1, p2]
+    edge2 = [p1, p3]
+    edge3 = [p2, p3]
+
+    edges = [edge1, edge2, edge3]
+    edgePoints = []
+
+    for vals in edges:
+        dx = abs(vals[1].get_x() - vals[0].get_x())
+        dy = abs(vals[1].get_y() - vals[0].get_y())
+
+        if dx > dy:
+            length = dx
+        elif dy > dx:
+            length = dy
+        else:
+            length = 1
+
+        dx = (vals[1].get_x() - vals[0].get_x())/float(length)
+        dy = (vals[1].get_y() - vals[0].get_y())/float(length)
+
+
+
+        dz = ((vals[1].get_z() - vals[0].get_z()) / (float(length)))
+
+
+
+        x = vals[0].get_x()
+        y = vals[0].get_y()
+        z = vals[0].get_z()
+        image[math.ceil(x)][math.ceil(y)].cRed = red
+        image[math.ceil(x)][math.ceil(y)].cGreen = green
+        image[math.ceil(x)][math.ceil(y)].cBlue = blue
+
+        edgePoints.append([math.ceil(x), math.ceil(y), math.ceil(dz)])
+
+        for i in range(length-1):
+            x += dx
+            y += dy
+            z += dz
+
+            image[math.ceil(x)][math.ceil(y)].cRed = red
+            image[math.ceil(x)][math.ceil(y)].cGreen = green
+            image[math.ceil(x)][math.ceil(y)].cBlue = blue
+            edgePoints.append([math.ceil(x), math.ceil(y), math.ceil(z)])
+
+    miny = 2000
+    maxy = 0
+
+    minz = 2000
+    maxz = 0
+
+    for k in edgePoints:
+        if k[1] > maxy:
+            maxy = k[1]
+        if k[1] < miny:
+            miny = k[1]
+
+        if k[2] > maxz:
+            maxz = k[2]
+        if k[2] < minz:
+            minz = k[2]
+
+    zBuffer = [[5000 for j in range(1000)] for k in range(1000)]
+
+    for y in range(miny, maxy, 1):
+        minx = 2000
+        maxx = 0
+
+        for val in edgePoints:
+            if val[1] == y:
+                if val[0] < minx:
+                    minx = val[0]
+
+                if val[0] > maxx:
+                    maxx = val[0]
+
+
+
+        for val in edgePoints:
+            if val[1] == y and val[0] == maxx:
+                maxz = val[2]
+
+            if val[1] == y and val[0] == minx:
+                minz = val[2]
+
+        if maxx - minx == 0:
+            delta = 0
+        else:
+            delta = (maxz - minz) / (maxx - minx)
+
+        z = minz
+
+        for x in range(minx, maxx, 1):
+            z += delta
+
+            if z < zBuffer[x][y]:
+                zBuffer[x][y] = math.ceil(z)
+                image[math.ceil(x)][math.ceil(y)].cRed = red
+                image[math.ceil(x)][math.ceil(y)].cGreen = green
+                image[math.ceil(x)][math.ceil(y)].cBlue = blue
 
 
 def spherical(matrix, xAngle, yAngle):
@@ -868,7 +937,6 @@ def imaging(matrix, name, polyList):
         image[i.get_x()][i.get_y()].cGreen = 255
         image[i.get_x()][i.get_y()].cBlue = 255
 
-    print(len(polyList))
 
     # rasterize each of the polygons
     for val in polyList:
@@ -877,9 +945,12 @@ def imaging(matrix, name, polyList):
         # find all combinations of 2 points in 3 point polygon
         new = list(itertools.combinations(key, 2))
 
+        newRaster(val, image)
+
         # connect each point pair together, which forms a triangle
-        for k in new:
-            rasterize(k[0], k[1], image)
+        # for k in new:
+        #     print(k[0].send_vals(), k[1].send_vals())
+        #     rasterize(k[0], k[1], image)
 
     newImage = image
 
