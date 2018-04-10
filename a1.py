@@ -6,6 +6,7 @@ from itertools import cycle
 from operator import attrgetter
 import numpy as np
 import random
+import time
 from PIL import Image
 
 
@@ -755,7 +756,7 @@ def scene(mesh, resolution, volume, isScene):
     polyList3 = cone(resolution, mesh, volume, isScene, xangle, yangle, zangle)
 
     # combine the polygons into 1 list
-    polygons = polyList3 + polyList1 + polyList2
+    polygons = polyList1 + polyList2 + polyList3
 
     flattened = []
 
@@ -815,14 +816,19 @@ def newRaster(polygon, image):
     edges = [edge1, edge2, edge3]
     edgePoints = []
 
+    count = 0
+
     for vals in edges:
+
         dx = abs(vals[1].get_x() - vals[0].get_x())
         dy = abs(vals[1].get_y() - vals[0].get_y())
 
-        if dx > dy:
+        if dx > dy or dy == 0:
             length = dx
-        elif dy > dx:
+        elif dy > dx or dx == 0:
             length = dy
+        elif dx == dy:
+            length = dx
         else:
             length = 1
 
@@ -830,21 +836,20 @@ def newRaster(polygon, image):
         dy = (vals[1].get_y() - vals[0].get_y())/float(length)
 
 
-
         dz = ((vals[1].get_z() - vals[0].get_z()) / (float(length)))
-
 
 
         x = vals[0].get_x()
         y = vals[0].get_y()
         z = vals[0].get_z()
+
         image[math.ceil(x)][math.ceil(y)].cRed = red
         image[math.ceil(x)][math.ceil(y)].cGreen = green
         image[math.ceil(x)][math.ceil(y)].cBlue = blue
 
         edgePoints.append([math.ceil(x), math.ceil(y), math.ceil(dz)])
 
-        for i in range(length-1):
+        for i in range(length):
             x += dx
             y += dy
             z += dz
@@ -909,6 +914,7 @@ def newRaster(polygon, image):
                 image[math.ceil(x)][math.ceil(y)].cRed = red
                 image[math.ceil(x)][math.ceil(y)].cGreen = green
                 image[math.ceil(x)][math.ceil(y)].cBlue = blue
+                
 
 
 def spherical(matrix, xAngle, yAngle):
@@ -938,9 +944,23 @@ def imaging(matrix, name, polyList):
         image[i.get_x()][i.get_y()].cBlue = 255
 
 
+    time1 = time.time()
+
+
     # rasterize each of the polygons
     for val in polyList:
         key = val.values()
+
+        time2 = time.time()
+
+        totalTime = (time2 - time1) * 150
+
+        
+
+        x = (totalTime + 100) % 255
+        y = (totalTime + 200) % 255
+        z = (totalTime + 300) % 255
+        val.setCol(x, y, z)
 
         # find all combinations of 2 points in 3 point polygon
         new = list(itertools.combinations(key, 2))
