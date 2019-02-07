@@ -533,6 +533,9 @@ def cube(res, mesh, isScene, xangle, yangle, zangle, vol):
             k.set_z(k.zCoord + 400)
 
 
+
+
+
     return polyList
 
 
@@ -1015,20 +1018,59 @@ if __name__ == "__main__":
 
     # redirect to appropriate algorithm for the shape
     if shape == "cube":
-        connections, matrix = cube(resolution, mesh, False, 0, 0, 0, volume)
-        removeWrapping(matrix)
+        matrix = cube(resolution, mesh, False, 0, 0, 0, volume)
+
+        flattened = []
+
+        for k in matrix:
+            if k.point1 not in flattened:
+                flattened.append(k.point1)
+
+            if k.point2 not in flattened:
+                flattened.append(k.point2)
+
+            if k.point3 not in flattened:
+                flattened.append(k.point3)
+
+        removeWrapping(flattened)
         name = "cube.png"
-        image = imaging(matrix, connections, name)
+        image = imaging(flattened, "cube.png", matrix)
     elif shape == "cylinder":
-        connections, matrix = cylinder(resolution, mesh, volume, False, 0, 0, 0)
+        matrix = cylinder(resolution, mesh, volume, False, 0, 0, 0)
+
+        flattened = []
+
+        for k in matrix:
+            if k.point1 not in flattened:
+                flattened.append(k.point1)
+
+            if k.point2 not in flattened:
+                flattened.append(k.point2)
+
+            if k.point3 not in flattened:
+                flattened.append(k.point3)
+
         removeWrapping(matrix)
         name = "cylinder.png"
-        image = imaging(matrix, connections, name)
+        image = imaging(flattened, "cylinder.png", matrix)
     elif shape == "cone":
-        connections, matrix = cone(resolution, mesh, volume, False, 0, 0, 0)
+        matrix = cone(resolution, mesh, volume, False, 0, 0, 0)
+
+        flattened = []
+
+        for k in matrix:
+            if k.point1 not in flattened:
+                flattened.append(k.point1)
+
+            if k.point2 not in flattened:
+                flattened.append(k.point2)
+
+            if k.point3 not in flattened:
+                flattened.append(k.point3)
+
         removeWrapping(matrix)
         name = "cone.png"
-        image = imaging(matrix, connections, name)
+        image = imaging(flattened, "cone.png", matrix)
     elif shape == "scene":
         scene(mesh, resolution, volume, True)
     else:

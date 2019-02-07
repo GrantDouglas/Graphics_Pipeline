@@ -1,0 +1,18 @@
+Graphics Pipeline
+
+
+This project is a python implementation of a graphics pipeline. This includes generating a shape mesh, performing perspective transformations, and applying back-face culling, hidden surface removal, and clipping.
+
+This program can create 3 different meshes, and a combined scene. The shapes are a Cube, a Cone, and a Cylinder.
+
+To run the program, the command line arguments are as follows: ./a1.py <type> <mesh> <resolution> <size>
+
+<type>: the shape to create, can be one of cube, cone, cylinder, scene
+<mesh>: the type of mesh to be created, currently only works for tri
+<resolution>: the resolution of the mesh, which determines how many polygons are on each face. Must be an integer that is smaller than <size>
+<size>: the size of the image, determining the volumetric area to generate the shape within. Must be an integer that is larger than <resolution>
+
+TODO:
+	- Fix the polygon mesh functionality
+	- Fix the back face culling
+	
